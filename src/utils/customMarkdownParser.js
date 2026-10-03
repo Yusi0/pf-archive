@@ -12,6 +12,23 @@ export function resolveAssetUrl(url) {
   return cleanBase + cleanPath;
 }
 
+export const PF_TAGS = {
+  '+': { type: 'buff', symbol: '+', label: '버프 / 개선' },
+  '-': { type: 'nerf', symbol: '−', label: '너프 / 불이익' },
+  '=': { type: 'change', symbol: '=', label: '기타 변경' },
+  'a': { type: 'att', symbol: 'A', label: '부착물 / 탄약' },
+  'A': { type: 'att', symbol: 'A', label: '부착물 / 탄약' },
+  'i': { type: 'info', symbol: 'i', label: '정보 / 참고' },
+  'I': { type: 'info', symbol: 'i', label: '정보 / 참고' },
+};
+
+export function renderPfChip(tagKey) {
+  if (!tagKey) return '';
+  const tag = PF_TAGS[tagKey] || PF_TAGS[tagKey.toLowerCase()];
+  if (!tag) return '';
+  return `<span class="pf-chip pf-chip-${tag.type}" aria-label="${tag.label}" title="${tag.label}">${tag.symbol}</span>`;
+}
+
 /**
  * 1. Parse Inline Syntax recursively
  */
@@ -87,6 +104,12 @@ export function parseInline(text) {
 
     // 9. Italic: *text*
     html = html.replace(/\*([\s\S]*?)\*/g, '<em>$1</em>');
+
+    // 10. PF Micro Chip Tokens: [+], [-], [=], [A], [i]
+    html = html.replace(/\[([+\-=aAiI])\](?!\()/g, (match, tagKey) => {
+      const chip = renderPfChip(tagKey);
+      return chip || match;
+    });
 
   } while (html !== prev);
 
@@ -458,15 +481,30 @@ export function parseBlocks(markdownText) {
     }
 
     const isOrdered = /^\d+\./.test(marker);
-    const isTag = marker.startsWith('[') && marker.endsWith(']');
+    let tagKey = null;
+    let cleanContent = itemContent;
+
+    if (marker.startsWith('[') && marker.endsWith(']')) {
+      const rawTag = marker.slice(1, -1);
+      if (PF_TAGS[rawTag] || PF_TAGS[rawTag.toLowerCase()]) {
+        tagKey = rawTag;
+      }
+    }
+
+    // Also check if content starts with [tag], e.g. - [+] 버프 -> tagKey = '+'
+    const tagMatch = cleanContent.match(/^\[([+\-=\w~!?]{1,2})\]\s*(.*)$/);
+    if (tagMatch && (PF_TAGS[tagMatch[1]] || PF_TAGS[tagMatch[1].toLowerCase()])) {
+      tagKey = tagMatch[1];
+      cleanContent = tagMatch[2];
+    }
 
     return {
       level: indentLevel,
       type: isOrdered ? 'ol' : 'ul',
       num: isOrdered ? marker.replace('.', '') : null,
       marker,
-      isTag,
-      content: itemContent
+      tagKey,
+      content: cleanContent
     };
   };
 
@@ -599,22 +637,27 @@ export function parseBlocks(markdownText) {
         const lis = nodes.map(n => {
           const hasChildren = n.children && n.children.length > 0;
           const inlineText = parseInline(n.content);
+          const chipHtml = n.tagKey ? renderPfChip(n.tagKey) : null;
 
           if (hasChildren) {
             const childHtml = renderTree(n.children);
+            const tagPrefix = chipHtml ? `<span class="list-item-tag">${chipHtml}</span>` : '';
             return `<li class="list-tree-item has-children">` +
               `<div class="list-item-row">` +
                 `<button class="list-tree-toggle" type="button" aria-expanded="true" title="하위 항목 접기/펼치기">▾</button>` +
+                tagPrefix +
                 `<span class="list-item-content">${inlineText}</span>` +
               `</div>` +
               `<div class="list-children-wrap">${childHtml}</div>` +
             `</li>`;
           } else {
-            let bullet = '•';
-            if (n.type === 'ol') {
+            let bullet;
+            if (chipHtml) {
+              bullet = chipHtml;
+            } else if (n.type === 'ol') {
               bullet = `${n.num}.`;
-            } else if (n.isTag) {
-              bullet = n.marker;
+            } else {
+              bullet = '•';
             }
             return `<li class="list-tree-item">` +
               `<div class="list-item-row">` +
