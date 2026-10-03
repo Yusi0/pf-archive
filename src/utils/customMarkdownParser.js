@@ -527,8 +527,16 @@ export function parseBlocks(markdownText) {
     // Graph block placeholder
     if (/^@@GRAPH:\d+@@$/.test(trimmed)) {
       flushPara();
+      // Remove any redundant blank-line divs pushed immediately before the graph
+      while (output.length > 0 && output[output.length - 1].includes('markdown-blank-line')) {
+        output.pop();
+      }
       output.push(trimmed);
       i++;
+      // Skip redundant empty lines immediately after the graph
+      while (i < lines.length && !lines[i].trim()) {
+        i++;
+      }
       continue;
     }
 
@@ -713,7 +721,7 @@ export function parseFullCustomMarkdown(markdownText) {
       ...graphData
     });
 
-    return `\n\n@@GRAPH:${graphId}@@\n\n`;
+    return `\n@@GRAPH:${graphId}@@\n`;
   });
 
   // 1. Extract Footnotes & Insert Safe Placeholders (@@FNREF:refId:fnId:fnLabel@@)

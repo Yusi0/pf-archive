@@ -159,8 +159,8 @@ export default function WeaponDamageGraph({ graphData }) {
 
   return (
     <div className="minimal-weapon-graph" style={{
-      margin: '2rem 0',
-      padding: '1rem 0 0.5rem 0',
+      margin: '0.85rem 0 1rem 0',
+      padding: '0',
       fontFamily: 'var(--font-mono)'
     }}>
       {/* Sleek Top Header Bar */}
