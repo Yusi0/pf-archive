@@ -519,15 +519,20 @@ code,
   color: var(--text-muted);
   flex-shrink: 0;
   user-select: none;
-  padding-top: 0.2rem;
+  margin-top: 0.2rem;
 }
 
 .markdown-body .list-item-tag {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 18px;
   margin-top: 0.2rem;
-  margin-right: 0.15rem;
   flex-shrink: 0;
+}
+
+.markdown-body .list-tree-item.has-children > .list-item-row > .list-item-tag {
+  cursor: pointer;
 }
 
 .markdown-body .list-item-content {

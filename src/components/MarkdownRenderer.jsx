@@ -127,8 +127,12 @@ export default function MarkdownRenderer({ content }) {
 
   // Click & Hover Event Delegation
   const handleContainerClick = (e) => {
-    // 1. Hierarchical List Tree Toggle (상위/하위 리스트 아이콘 클릭 접기/펼치기)
-    const treeToggle = e.target.closest('.list-tree-toggle');
+    // 1. Hierarchical List Tree Toggle (상위/하위 리스트 아이콘 및 토글 화살표 클릭 접기/펼치기)
+    const treeToggle = e.target.closest('.list-tree-toggle') ||
+      (e.target.closest('.list-tree-item.has-children > .list-item-row > .list-item-tag')
+        ? e.target.closest('.list-item-row')?.querySelector('.list-tree-toggle')
+        : null);
+
     if (treeToggle) {
       e.preventDefault();
       e.stopPropagation();

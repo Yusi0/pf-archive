@@ -649,11 +649,11 @@ export function parseBlocks(markdownText) {
 
           if (hasChildren) {
             const childHtml = renderTree(n.children);
-            const tagPrefix = chipHtml ? `<span class="list-item-tag">${chipHtml}</span>` : '';
+            const tagChip = chipHtml ? `<span class="list-item-tag">${chipHtml}</span>` : '';
             return `<li class="list-tree-item has-children">` +
               `<div class="list-item-row">` +
+                tagChip +
                 `<button class="list-tree-toggle" type="button" aria-expanded="true" title="하위 항목 접기/펼치기">▾</button>` +
-                tagPrefix +
                 `<span class="list-item-content">${inlineText}</span>` +
               `</div>` +
               `<div class="list-children-wrap">${childHtml}</div>` +
