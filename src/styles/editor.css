@@ -186,24 +186,87 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
-/* Left body: the textarea scrolls itself (native caret handling) */
-.editor-textarea {
+/* Left body: CodeMirror scrolls itself. Same type scale and column as the preview. */
+.editor-cm {
   flex: 1;
   min-height: 0;
-  width: 100%;
-  /* Same reading column as the preview: text wraps at the same width and size */
-  padding: 1.25rem max(1.5rem, calc((100% - var(--max-width)) / 2)) 3rem;
-  resize: none;
-  font-family: var(--font-sans);
   font-size: calc(1.02rem * var(--reading-scale, 1));
-  line-height: 1.85;
-  word-break: keep-all;
-  color: var(--text-primary);
-  tab-size: 4;
 }
 
-.editor-textarea::placeholder {
+.editor-cm .cm-editor {
+  height: 100%;
+}
+
+.editor-cm .cm-content {
+  padding: 1.25rem max(1.5rem, calc((100% - var(--max-width)) / 2)) 3rem;
+}
+
+.editor-cm .cm-line {
+  padding: 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Source styling: dim the syntax, emphasise headings (sizes match the real article) */
+.editor-cm .cm-syn {
   color: var(--text-muted);
+}
+
+.editor-cm .cm-h {
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.editor-cm .cm-h1 { font-size: 1.6rem; }
+.editor-cm .cm-h2 { font-size: 1.35rem; }
+.editor-cm .cm-h3 { font-size: 1.15rem; }
+.editor-cm .cm-h4,
+.editor-cm .cm-h5,
+.editor-cm .cm-h6 { font-size: 1.02rem; }
+
+.editor-cm .cm-fence {
+  color: var(--text-muted);
+}
+
+/* Mode switch */
+.editor-modes {
+  display: inline-flex;
+  gap: 0.1rem;
+  padding: 0.12rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.editor-mode {
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.editor-mode:hover {
+  color: var(--text-primary);
+}
+
+.editor-mode.is-active {
+  background-color: var(--bg-secondary);
+  color: var(--text-strong);
+}
+
+/* Single-pane modes: one centred column, no tab bar, no pane label, no tint */
+.editor-app:not([data-mode='split']) .editor-split {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.editor-app:not([data-mode='split']) .editor-pane-edit {
+  background-color: transparent;
+  border-right: 0;
+}
+
+.editor-app:not([data-mode='split']) .editor-pane-head,
+.editor-app:not([data-mode='split']) .editor-tabs {
+  display: none;
 }
 
 /* Right body: the pane scrolls; the column matches the real reading width */
@@ -225,10 +288,6 @@
     padding: 0.55rem 1rem 0.4rem;
   }
 
-  .editor-tabs {
-    display: flex;
-  }
-
   .editor-pane-head {
     display: none;
   }
@@ -241,8 +300,12 @@
     border-right: 0;
   }
 
-  .editor-app[data-tab='edit'] .editor-pane-preview,
-  .editor-app[data-tab='preview'] .editor-pane-edit {
+  .editor-app[data-mode='split'] .editor-tabs {
+    display: flex;
+  }
+
+  .editor-app[data-mode='split'][data-tab='edit'] .editor-pane-preview,
+  .editor-app[data-mode='split'][data-tab='preview'] .editor-pane-edit {
     display: none;
   }
 
@@ -251,7 +314,7 @@
     width: 9.5rem;
   }
 
-  .editor-textarea {
+  .editor-cm .cm-content {
     padding: 1rem 1rem 3rem;
   }
 

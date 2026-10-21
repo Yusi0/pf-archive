@@ -4,9 +4,15 @@ import { fetchContentPosts, saveContentPost, deleteContentPost, uploadImage } fr
 import { stringifyFrontmatter } from '../utils/frontmatter';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import FontSizeControl from '../components/FontSizeControl';
+import CodeEditor from '../editor/CodeEditor';
 import { extractHeadings } from '../components/TableOfContents';
 import { ArrowLeftIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
 import '../styles/editor.css';
+
+const MODES = [
+  ['source', 'Source', '원문 편집'],
+  ['split', 'Split', '편집 + 실제 페이지 미리보기'],
+];
 
 export default function EditorPage() {
   const navigate = useNavigate();
@@ -21,7 +27,9 @@ export default function EditorPage() {
   const [isSaved, setIsSaved] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
 
-  const textareaRef = useRef(null);
+  const editorRef = useRef(null);
+  // The document lives in CodeMirror; this pushes a loaded post into it (a new object = replace).
+  const [externalDoc, setExternalDoc] = useState(null);
 
   useEffect(() => {
     async function loadPost() {
@@ -34,6 +42,7 @@ export default function EditorPage() {
           setDate(target.date || new Date().toISOString().split('T')[0]);
           setSummary(target.summary || '');
           setContent(target.content || '');
+          setExternalDoc({ text: target.content || '' });
           setIsSaved(true);
           return;
         }
@@ -45,7 +54,7 @@ export default function EditorPage() {
       setTitle('[PF Revamp] 테스트 서버 업데이트 기록');
       setDate(defaultDate);
       setSummary('');
-      setContent(`
+      const sample = `
 # [r#PF Revamp] 반동 물리 및 모션 개편
 
 PF Revamp의 새로운 모션 시스템 테스트가 진행되었습니다.{^1: 9월 25일 [r#roadmap] 메시지 기준입니다.}
@@ -61,7 +70,9 @@ New procedural recoil and movement inertia system is currently under testing.
 | *M16A3* | ==y#34== |
 
 [[https://www.youtube.com/watch?v=dQw4w9WgXcQ]]
-`.trim());
+`.trim();
+      setContent(sample);
+      setExternalDoc({ text: sample });
       setIsSaved(true);
     }
 
@@ -118,162 +129,48 @@ New procedural recoil and movement inertia system is currently under testing.
     }
   };
 
-  const handleKeyDown = (e) => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
+  const handleImagePaste = async (file) => {
+    const editor = editorRef.current;
+    if (!editor) return;
 
-    // Tab key: Insert tab or indent/unindent selected lines
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      if (start === end) {
-        // Single cursor: insert tab
-        const success = document.execCommand && document.execCommand('insertText', false, '\t');
-        if (!success) {
-          textarea.setRangeText('\t', start, end, 'end');
-        }
-        setContent(textarea.value);
-        setIsSaved(false);
-      } else {
-        // Multi-line selection: indent or unindent
-        const val = textarea.value;
-        const lineStart = val.lastIndexOf('\n', start - 1) + 1;
-        let lineEnd = val.indexOf('\n', end);
-        if (lineEnd === -1) lineEnd = val.length;
-
-        const targetBlock = val.substring(lineStart, lineEnd);
-        const lines = targetBlock.split('\n');
-
-        let modifiedLines;
-        if (e.shiftKey) {
-          // Shift + Tab: unindent (remove leading \t or 1-4 spaces)
-          modifiedLines = lines.map(line => {
-            if (line.startsWith('\t')) return line.substring(1);
-            if (line.startsWith('    ')) return line.substring(4);
-            if (line.startsWith('  ')) return line.substring(2);
-            if (line.startsWith(' ')) return line.substring(1);
-            return line;
-          });
-        } else {
-          // Tab: indent (add leading \t)
-          modifiedLines = lines.map(line => '\t' + line);
-        }
-
-        const replacement = modifiedLines.join('\n');
-        textarea.setSelectionRange(lineStart, lineEnd);
-        const success = document.execCommand && document.execCommand('insertText', false, replacement);
-        if (!success) {
-          textarea.setRangeText(replacement, lineStart, lineEnd, 'select');
-        } else {
-          textarea.setSelectionRange(lineStart, lineStart + replacement.length);
-        }
-        setContent(textarea.value);
-        setIsSaved(false);
-      }
-      return;
-    }
-
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const ctrlKey = isMac ? e.metaKey : e.ctrlKey;
-
-    if (!ctrlKey) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-
-    if (e.key === 's' || e.key === 'S') {
-      e.preventDefault();
-      handleSave();
-    } else if (e.key === 'b' || e.key === 'B') {
-      e.preventDefault();
-      const wrapped = `**${selectedText || '텍스트'}**`;
-      setContent(content.substring(0, start) + wrapped + content.substring(end));
-      setIsSaved(false);
-    } else if (e.key === 'i' || e.key === 'I') {
-      e.preventDefault();
-      const wrapped = `*${selectedText || '텍스트'}*`;
-      setContent(content.substring(0, start) + wrapped + content.substring(end));
-      setIsSaved(false);
-    } else if (e.key === 'k' || e.key === 'K') {
-      e.preventDefault();
-      const wrapped = `[${selectedText || '링크 텍스트'}](https://)`;
-      setContent(content.substring(0, start) + wrapped + content.substring(end));
-      setIsSaved(false);
-    }
-  };
-
-  const handlePaste = async (e) => {
-    const clipboardData = e.clipboardData;
-    if (!clipboardData) return;
-
-    const items = clipboardData.items;
-    let imageFile = null;
-
-    if (items) {
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type && items[i].type.startsWith('image/')) {
-          imageFile = items[i].getAsFile();
-          break;
-        }
-      }
-    }
-
-    if (!imageFile) {
-      return; // 일반 텍스트 붙여넣기 동작 유지
-    }
-
-    e.preventDefault();
-
-    const textarea = textareaRef.current;
-    const start = textarea ? textarea.selectionStart : content.length;
-    const end = textarea ? textarea.selectionEnd : content.length;
-
-    const placeholder = `![이미지 업로드 중...]()\n`;
-    const newContent = content.substring(0, start) + placeholder + content.substring(end);
-    setContent(newContent);
+    const placeholder = '![이미지 업로드 중...]()\n';
+    editor.insertAtSelection(placeholder);
     setIsUploading(true);
 
     try {
-      const { url, filename: uploadedFilename } = await uploadImage(imageFile);
-      const markdownImage = `![${uploadedFilename}](${url})\n`;
-      setContent(prev => prev.replace(placeholder, markdownImage));
-      setIsSaved(false);
+      const { url, filename: uploadedFilename } = await uploadImage(file);
+      editor.replaceFirst(placeholder, `![${uploadedFilename}](${url})\n`);
     } catch (err) {
       alert(`이미지 업로드 실패: ${err.message}`);
-      setContent(prev => prev.replace(placeholder, ''));
+      editor.replaceFirst(placeholder, '');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const insertSyntax = (prefix, suffix = '') => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      setContent(prev => prev + '\n' + prefix + suffix);
-      setIsSaved(false);
-      return;
-    }
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-    const replacement = prefix + (selectedText || '') + suffix;
-
-    setContent(content.substring(0, start) + replacement + content.substring(end));
-    setIsSaved(false);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
-    }, 0);
-  };
-
   const [showHelpModal, setShowHelpModal] = useState(false);
 
-  // Narrow screens show one pane at a time
+  // Live / Source are single-pane; Split keeps the old edit + preview layout.
+  const [mode, setMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pf_editor_mode');
+      return ['source', 'split'].includes(saved) ? saved : 'source';
+    } catch {
+      return 'source';
+    }
+  });
+  const changeMode = (next) => {
+    setMode(next);
+    lastSyncedRef.current = null;
+    try {
+      localStorage.setItem('pf_editor_mode', next);
+    } catch {
+      // Storage unavailable: the mode still applies for this session.
+    }
+    setTimeout(() => editorRef.current?.focus(), 0);
+  };
+
+  // Narrow screens show one pane at a time (split mode only)
   const [tab, setTab] = useState('edit');
 
   // Follow the caret: scroll the preview to the heading the caret is under
@@ -287,7 +184,7 @@ New procedural recoil and movement inertia system is currently under testing.
   const previewRef = useRef(null);
   const syncTimerRef = useRef(null);
   const lastSyncedRef = useRef(null);
-  const headings = useMemo(() => extractHeadings(content), [content]);
+  const headings = useMemo(() => (mode === 'split' ? extractHeadings(content) : []), [content, mode]);
 
   useEffect(() => () => clearTimeout(syncTimerRef.current), []);
 
@@ -302,15 +199,13 @@ New procedural recoil and movement inertia system is currently under testing.
     }
   };
 
-  const syncPreviewToCaret = () => {
-    if (!syncOn) return;
+  const syncPreviewToCaret = (caretLine) => {
+    if (!syncOn || mode !== 'split') return;
     clearTimeout(syncTimerRef.current);
     syncTimerRef.current = setTimeout(() => {
-      const textarea = textareaRef.current;
       const pane = previewRef.current;
-      if (!textarea || !pane || !pane.offsetParent) return; // preview hidden (narrow edit tab)
+      if (!pane || !pane.offsetParent) return; // preview hidden (narrow edit tab)
 
-      const caretLine = textarea.value.slice(0, textarea.selectionStart).split('\n').length - 1;
       let target = null;
       for (const heading of headings) {
         if (heading.line <= caretLine) target = heading;
@@ -339,7 +234,7 @@ New procedural recoil and movement inertia system is currently under testing.
   };
 
   return (
-    <div className="editor-app" data-tab={tab}>
+    <div className="editor-app" data-tab={tab} data-mode={mode}>
       <header className="editor-toolbar">
         <button type="button" className="icon-btn" onClick={() => navigate('/')} aria-label="홈으로" title="홈으로">
           <ArrowLeftIcon />
@@ -359,16 +254,32 @@ New procedural recoil and movement inertia system is currently under testing.
             largerLabel="글자 크게"
           />
           <span className="editor-divider" aria-hidden="true" />
-          <button
-            type="button"
-            className={`icon-btn${syncOn ? ' is-active' : ''}`}
-            onClick={toggleSync}
-            aria-pressed={syncOn}
-            aria-label="프리뷰 따라가기"
-            title="커서가 있는 제목으로 프리뷰 이동"
-          >
-            <SyncIcon />
-          </button>
+          <div className="editor-modes" role="group" aria-label="편집 모드">
+            {MODES.map(([key, label, hint]) => (
+              <button
+                key={key}
+                type="button"
+                className={`editor-mode${mode === key ? ' is-active' : ''}`}
+                onClick={() => changeMode(key)}
+                aria-pressed={mode === key}
+                title={hint}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {mode === 'split' && (
+            <button
+              type="button"
+              className={`icon-btn${syncOn ? ' is-active' : ''}`}
+              onClick={toggleSync}
+              aria-pressed={syncOn}
+              aria-label="프리뷰 따라가기"
+              title="커서가 있는 제목으로 프리뷰 이동"
+            >
+              <SyncIcon />
+            </button>
+          )}
           <button type="button" className="icon-btn" onClick={() => setShowHelpModal(true)} aria-label="마크다운 문법 가이드" title="마크다운 문법 가이드">
             <HelpIcon />
           </button>
@@ -428,19 +339,19 @@ New procedural recoil and movement inertia system is currently under testing.
       <div className="editor-split">
         <section className="editor-pane editor-pane-edit" aria-label="편집">
           <div className="editor-pane-head">EDIT</div>
-          <textarea
-            ref={textareaRef}
-            className="editor-textarea"
-            value={content}
-            onChange={(e) => { setContent(e.target.value); setIsSaved(false); }}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            onSelect={syncPreviewToCaret}
+          <CodeEditor
+            ref={editorRef}
+            externalDoc={externalDoc}
+            mode={mode}
+            onChange={(text) => { setContent(text); setIsSaved(false); }}
+            onSave={handleSave}
+            onImagePaste={handleImagePaste}
+            onCaretLine={syncPreviewToCaret}
             placeholder="Markdown 문서 내용을 작성하세요..."
-            spellCheck={false}
           />
         </section>
 
+        {mode === 'split' && (
         <section className="editor-pane editor-pane-preview" aria-label="미리보기">
           <div className="editor-pane-head">PREVIEW</div>
           <div className="editor-preview-scroll" ref={previewRef}>
@@ -456,6 +367,7 @@ New procedural recoil and movement inertia system is currently under testing.
             </article>
           </div>
         </section>
+        )}
       </div>
 
       {/* Markdown Help Modal Popover */}
