@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { parseFullCustomMarkdown, toSuperscript } from '../utils/customMarkdownParser';
 import WeaponDamageGraph from './WeaponDamageGraph';
 
 export default function MarkdownRenderer({ content }) {
   const safeContent = content || '';
-  const { fullHtml = '', footnotes = [], graphs = [] } = parseFullCustomMarkdown(safeContent);
+  // Memoised: `graphs` is an effect dependency below, so a fresh array every render would loop forever.
+  const { fullHtml = '', footnotes = [], graphs = [] } = useMemo(() => parseFullCustomMarkdown(safeContent), [safeContent]);
 
   const [popover, setPopover] = useState(null); // { id, number, content, x, y }
   const [graphPortals, setGraphPortals] = useState([]);

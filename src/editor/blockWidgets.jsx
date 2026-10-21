@@ -60,6 +60,14 @@ export function findBlocks(doc) {
   return blocks;
 }
 
+const cache = new WeakMap();
+/** findBlocks memoised per document (the doc object is immutable). */
+export function blocksFor(doc) {
+  let blocks = cache.get(doc);
+  if (!blocks) cache.set(doc, (blocks = findBlocks(doc)));
+  return blocks;
+}
+
 const ESTIMATE = { table: 34, graph: 330, media: 320, code: 28 };
 
 class BlockWidget extends WidgetType {
@@ -123,12 +131,12 @@ function decorate(state, blocks) {
 
 const blockField = StateField.define({
   create(state) {
-    const blocks = findBlocks(state.doc);
+    const blocks = blocksFor(state.doc);
     return { blocks, deco: decorate(state, blocks) };
   },
   update(value, tr) {
     if (!tr.docChanged && !tr.selection) return value;
-    const blocks = tr.docChanged ? findBlocks(tr.state.doc) : value.blocks;
+    const blocks = tr.docChanged ? blocksFor(tr.state.doc) : value.blocks;
     return { blocks, deco: decorate(tr.state, blocks) };
   },
   provide: (field) => EditorView.decorations.from(field, (value) => value.deco),

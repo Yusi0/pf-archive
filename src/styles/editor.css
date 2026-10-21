@@ -294,6 +294,28 @@
   color: var(--text-muted);
 }
 
+.editor-cm .cm-bullet {
+  color: var(--text-muted);
+}
+
+.editor-cm .cm-rule {
+  display: block;
+  height: 0;
+  margin: 0.9em 0;
+  border-top: 1px solid var(--border-strong);
+}
+
+.editor-cm .cm-fold-title {
+  font-size: 0.85em;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.editor-cm .cm-fold-end {
+  line-height: 0.6;
+  height: 0.6em;
+}
+
 .editor-cm .cm-fn-chip {
   display: inline-block;
   min-width: 1.1em;

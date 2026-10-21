@@ -2,6 +2,7 @@ import { Decoration, ViewPlugin, WidgetType } from '@codemirror/view';
 import { COLOR_PALETTE, DEFAULT_HIGHLIGHT_BG } from '../utils/customColorPalette';
 import { PF_TAGS } from '../utils/customMarkdownParser';
 import { scanInline, scanLinePrefix } from './inlineSyntax';
+import { blocksFor } from './blockWidgets';
 
 // Live Preview, inline layer. Nothing here edits the document: markers are hidden with
 // replace decorations and formatting is applied with mark decorations, so undo/redo and
@@ -53,6 +54,35 @@ class FootnoteChip extends WidgetType {
   }
 }
 
+class BulletDot extends WidgetType {
+  eq() {
+    return true;
+  }
+  toDOM() {
+    const el = document.createElement('span');
+    el.className = 'cm-bullet';
+    el.textContent = '•';
+    return el;
+  }
+}
+
+class Rule extends WidgetType {
+  eq() {
+    return true;
+  }
+  toDOM() {
+    const el = document.createElement('span');
+    el.className = 'cm-rule';
+    return el;
+  }
+}
+
+const bullet = Decoration.replace({ widget: new BulletDot() });
+const rule = Decoration.replace({ widget: new Rule() });
+
+const FOLD_OPEN = /^(\s*):::\s*(?!graph)(\S.*)$/i;
+const FOLD_CLOSE = /^\s*:::\s*$/;
+
 const INLINE_CLASS = {
   bold: 'cm-b',
   italic: 'cm-i',
@@ -77,6 +107,7 @@ function build(view) {
   const { state } = view;
   const { doc } = state;
   const active = activeLines(state);
+  const blocks = blocksFor(doc);
   const out = [];
   let lastLine = 0;
 
@@ -90,9 +121,9 @@ function build(view) {
 
       const text = line.text;
       const prefix = scanLinePrefix(text);
-      // Lists (bullets, [+]/[-]/[=]/[A]/[i] tags) stay as source in Live mode: only the dimmed Source styling applies.
-      const isListLine = prefix?.kind === 'list' || /^\s*\[[+\-=aAiI]\](?!\()/.test(text);
-      const raw = active.has(line.number) || isListLine;
+      // Lines inside a table/graph/code/media block (shown raw because the caret is in it) get Source styling only.
+      const inBlock = blocks.some((b) => line.from >= b.from && line.to <= b.to);
+      const raw = active.has(line.number) || inBlock;
       const at = (n) => line.from + n;
       const hideOrDim = (a, b) => {
         if (b > a) out.push((raw ? dim : hide).range(at(a), at(b)));
@@ -105,12 +136,25 @@ function build(view) {
         out.push(lineClass('cm-quote').range(line.from));
         hideOrDim(...prefix.marker);
       } else if (prefix?.kind === 'fence') {
-        out.push(lineClass('cm-fence').range(line.from));
-        if (prefix.marker[1] > prefix.marker[0]) out.push(dim.range(at(prefix.marker[0]), at(prefix.marker[1])));
+        const open = text.match(FOLD_OPEN);
+        if (!raw && open) {
+          // Fold title: a quiet label; the content below is always shown expanded in Live mode.
+          out.push(lineClass('cm-fold-title').range(line.from));
+          out.push(hide.range(at(open[1].length), at(text.length - open[2].length)));
+        } else if (!raw && FOLD_CLOSE.test(text)) {
+          out.push(lineClass('cm-fold-end').range(line.from));
+          out.push(hide.range(at(prefix.marker[0]), at(text.length)));
+        } else {
+          out.push(lineClass('cm-fence').range(line.from));
+          if (prefix.marker[1] > prefix.marker[0]) out.push(dim.range(at(prefix.marker[0]), at(prefix.marker[1])));
+        }
       } else if (prefix?.kind === 'hr') {
-        out.push(lineClass('cm-hr').range(line.from));
+        if (raw) out.push(dim.range(line.from, line.to));
+        else out.push(rule.range(line.from, line.to));
       } else if (prefix?.kind === 'list') {
-        out.push(dim.range(at(prefix.marker[0]), at(prefix.marker[1])));
+        const [a, b] = prefix.marker;
+        if (!raw && !prefix.ordered) out.push(bullet.range(at(a), at(b)));
+        else out.push(dim.range(at(a), at(b)));
       } else if (prefix?.kind === 'table') {
         for (let i = 0; i < text.length; i++) if (text[i] === '|') out.push(dim.range(at(i), at(i + 1)));
       }
