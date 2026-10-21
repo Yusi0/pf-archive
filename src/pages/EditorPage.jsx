@@ -353,10 +353,10 @@ New procedural recoil and movement inertia system is currently under testing.
 
         <div className="editor-actions">
           <FontSizeControl
-            storageKey="pf_editor_scale"
-            cssVar="--editor-scale"
-            smallerLabel="에디터 글자 작게"
-            largerLabel="에디터 글자 크게"
+            storageKey="pf_reading_scale"
+            cssVar="--reading-scale"
+            smallerLabel="글자 작게"
+            largerLabel="글자 크게"
           />
           <span className="editor-divider" aria-hidden="true" />
           <button
@@ -392,19 +392,19 @@ New procedural recoil and movement inertia system is currently under testing.
       {/* Shared meta row: sits above both panes so their bodies start at the same height */}
       <div className="editor-meta">
         <input
-          type="date"
-          className="meta-date"
-          value={date}
-          onChange={(e) => { setDate(e.target.value); setIsSaved(false); }}
-          aria-label="날짜"
-        />
-        <input
           type="text"
           className="meta-title"
           placeholder="문서 제목을 입력하세요..."
           value={title}
           onChange={(e) => { setTitle(e.target.value); setIsSaved(false); }}
           aria-label="제목"
+        />
+        <input
+          type="date"
+          className="meta-date"
+          value={date}
+          onChange={(e) => { setDate(e.target.value); setIsSaved(false); }}
+          aria-label="날짜"
         />
         <input
           type="text"
