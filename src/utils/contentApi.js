@@ -109,3 +109,18 @@ export async function uploadImage(file) {
   });
 }
 
+
+/**
+ * Upload a video clip; the dev server transcodes it with ffmpeg (720p max, H.264) and stores it in public/uploads/.
+ * Resolves { url, filename, size, warning? }.
+ */
+export async function uploadVideo(file) {
+  const res = await fetch('/api/upload-video', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream', 'x-filename': encodeURIComponent(file.name || 'clip') },
+    body: file
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || '영상 업로드에 실패했습니다.');
+  return data;
+}

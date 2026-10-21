@@ -13,6 +13,23 @@ const modeExtension = (mode) => (mode === 'live' ? [liveStyle, blockWidgets] : s
 
 const External = Annotation.define();
 
+const handleMediaFactory = (cbRef) => (event, transfer) => {
+  const files = [...(transfer?.files || [])];
+  const image = files.find((f) => f.type.startsWith('image/'));
+  const video = files.find((f) => f.type.startsWith('video/'));
+  if (image && cbRef.current.onImagePaste) {
+    event.preventDefault();
+    cbRef.current.onImagePaste(image);
+    return true;
+  }
+  if (video && cbRef.current.onVideoPaste) {
+    event.preventDefault();
+    cbRef.current.onVideoPaste(video);
+    return true;
+  }
+  return false;
+};
+
 /** Wraps the selection (or a placeholder) and selects the wrapped text so typing replaces it. */
 function wrapSelection(view, prefix, suffix, fallback) {
   const { from, to } = view.state.selection.main;
@@ -31,14 +48,14 @@ function wrapSelection(view, prefix, suffix, fallback) {
  * (loading a post), `onChange` reports user edits as a string.
  */
 const CodeEditor = forwardRef(function CodeEditor(
-  { externalDoc, onChange, onSave, onImagePaste, onCaretLine, mode, placeholder },
+  { externalDoc, onChange, onSave, onImagePaste, onVideoPaste, onCaretLine, mode, placeholder },
   ref,
 ) {
   const hostRef = useRef(null);
   const viewRef = useRef(null);
   const modeCompartment = useRef(new Compartment());
   const cbRef = useRef({});
-  cbRef.current = { onChange, onSave, onImagePaste, onCaretLine };
+  cbRef.current = { onChange, onSave, onImagePaste, onVideoPaste, onCaretLine };
 
   useImperativeHandle(ref, () => ({
     focus: () => viewRef.current?.focus(),
@@ -66,6 +83,7 @@ const CodeEditor = forwardRef(function CodeEditor(
 
   // Mount once; later prop changes reach the view through refs, annotations and the mode compartment.
   useEffect(() => {
+    const handleMedia = handleMediaFactory(cbRef);
     const keys = [
       { key: 'Mod-s', preventDefault: true, run: () => (cbRef.current.onSave?.(), true) },
       { key: 'Mod-b', preventDefault: true, run: (v) => wrapSelection(v, '**', '**', '텍스트') },
@@ -90,20 +108,12 @@ const CodeEditor = forwardRef(function CodeEditor(
         slashMenu,
         modeCompartment.current.of(modeExtension(mode)),
         EditorView.domEventHandlers({
+          // Pasted or dropped images / videos are uploaded (and compressed) instead of inserted as text
           paste(event) {
-            const items = event.clipboardData?.items;
-            if (!items) return false;
-            for (const item of items) {
-              if (item.type && item.type.startsWith('image/')) {
-                const file = item.getAsFile();
-                if (file && cbRef.current.onImagePaste) {
-                  event.preventDefault();
-                  cbRef.current.onImagePaste(file);
-                  return true;
-                }
-              }
-            }
-            return false;
+            return handleMedia(event, event.clipboardData);
+          },
+          drop(event) {
+            return handleMedia(event, event.dataTransfer);
           },
         }),
         EditorView.updateListener.of((update) => {

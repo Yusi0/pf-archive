@@ -157,7 +157,7 @@ export function parseMedia(url) {
   // Video extensions
   const videoExts = ['.mp4', '.webm', '.mov', '.m4v', '.ogg'];
   if (videoExts.some(ext => lowerPath.endsWith(ext)) || lowerPath.includes('/video/') || lowerPath.includes('/videos/')) {
-    return `<div class="media-video-wrapper"><video src="${cleanUrl}" controls style="max-width: 100%; height: auto; display: block; margin: 1.5rem 0; border: 1px solid var(--border-subtle);"></video></div>`;
+    return `<div class="media-video-wrapper"><video src="${cleanUrl}" controls preload="metadata" playsinline style="max-width: 100%; height: auto; display: block; margin: 1.5rem 0; border: 1px solid var(--border-subtle);"></video></div>`;
   }
 
   // Image extensions

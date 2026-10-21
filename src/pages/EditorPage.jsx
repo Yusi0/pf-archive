@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchContentPosts, saveContentPost, deleteContentPost, uploadImage } from '../utils/contentApi';
+import { fetchContentPosts, saveContentPost, deleteContentPost, uploadImage, uploadVideo } from '../utils/contentApi';
 import { stringifyFrontmatter } from '../utils/frontmatter';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import FontSizeControl from '../components/FontSizeControl';
@@ -156,6 +156,26 @@ New procedural recoil and movement inertia system is currently under testing.
       editor.replaceFirst(placeholder, `![](${url})\n`);
     } catch (err) {
       alert(`이미지 업로드 실패: ${err.message}`);
+      editor.replaceFirst(placeholder, '');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleVideoPaste = async (file) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const placeholder = '[[영상 압축·업로드 중...]]\n';
+    editor.insertAtSelection(placeholder);
+    setIsUploading(true);
+
+    try {
+      const { url, warning } = await uploadVideo(file);
+      editor.replaceFirst(placeholder, `[[${url}]]\n`);
+      if (warning) alert(warning);
+    } catch (err) {
+      alert(`영상 업로드 실패: ${err.message}`);
       editor.replaceFirst(placeholder, '');
     } finally {
       setIsUploading(false);
@@ -372,6 +392,7 @@ New procedural recoil and movement inertia system is currently under testing.
             onChange={(text) => { setContent(text); setIsSaved(false); }}
             onSave={handleSave}
             onImagePaste={handleImagePaste}
+            onVideoPaste={handleVideoPaste}
             onCaretLine={syncPreviewToCaret}
             placeholder="Markdown 문서 내용을 작성하세요..."
           />
