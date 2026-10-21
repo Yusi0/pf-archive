@@ -1,19 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { fetchContentPosts } from '../utils/contentApi';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
-import ReadingSizeControl from '../components/ReadingSizeControl';
+import FontSizeControl from '../components/FontSizeControl';
 import BackToTop from '../components/BackToTop';
 
 export default function PostDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [post, setPost] = useState(null);
-  const [prevPost, setPrevPost] = useState(null);
-  const [nextPost, setNextPost] = useState(null);
+  const [olderPost, setOlderPost] = useState(null);
+  const [newerPost, setNewerPost] = useState(null);
   const [error, setError] = useState(null);
+
+  // A direct visit (e.g. from a Discord embed) has no in-app history: go to the list instead of leaving the site.
+  const goBack = () => {
+    if (location.key !== 'default') navigate(-1);
+    else navigate('/');
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -43,9 +50,10 @@ export default function PostDetailPage() {
       }
 
       if (postIndex >= 0) {
+        // `loaded` is sorted newest first: the previous index is the newer post.
         setPost(loaded[postIndex]);
-        setPrevPost(postIndex > 0 ? loaded[postIndex - 1] : null);
-        setNextPost(postIndex < loaded.length - 1 ? loaded[postIndex + 1] : null);
+        setNewerPost(postIndex > 0 ? loaded[postIndex - 1] : null);
+        setOlderPost(postIndex < loaded.length - 1 ? loaded[postIndex + 1] : null);
       }
     }
 
@@ -54,12 +62,10 @@ export default function PostDetailPage() {
 
   if (!post) {
     return (
-      <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
+      <div className="container post-missing">
         <h2>{error ? '글을 불러오지 못했습니다.' : 'Document not found.'}</h2>
-        {error && <p style={{ color: 'var(--text-muted)' }}>{error}</p>}
-        <Link to="/" style={{ color: 'var(--text-secondary)', marginTop: '1rem', display: 'inline-block' }}>
-          ← Return to Index
-        </Link>
+        {error && <p>{error}</p>}
+        <Link to="/" className="post-missing-link">← 목록으로</Link>
       </div>
     );
   }
@@ -68,33 +74,31 @@ export default function PostDetailPage() {
     <div className="post-page-wrapper">
       <BackToTop />
       <div className="post-layout-container">
-        {/* Left Sticky Sidebar: TOC */}
         <aside className="post-toc-sidebar">
           <TableOfContents content={post.content} />
         </aside>
 
-        {/* Center Main Article */}
         <article className="post-main-article">
-          {/* Simple Text Breadcrumb & Edit Link */}
           <div className="post-nav-bar">
-            <button
-              onClick={() => navigate(-1)}
-              style={{ color: 'var(--text-muted)', padding: 0, fontSize: 'inherit' }}
-            >
-              ← Back
+            <button type="button" className="post-back" onClick={goBack}>
+              ← 목록
             </button>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="post-nav-actions">
               {import.meta.env.DEV && (
-                <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
+                <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} className="post-edit-link">
                   [Edit / 수정]
                 </Link>
               )}
-              <ReadingSizeControl />
+              <FontSizeControl
+                storageKey="pf_reading_scale"
+                cssVar="--reading-scale"
+                smallerLabel="글자 작게"
+                largerLabel="글자 크게"
+              />
             </div>
           </div>
 
-          {/* Article Header */}
           <header className="article-header">
             <h1 className="article-title">{post.title}</h1>
             <div className="article-meta-bar">
@@ -102,39 +106,26 @@ export default function PostDetailPage() {
             </div>
           </header>
 
-          {/* Article Body */}
           <MarkdownRenderer content={post.content} />
 
-          {/* Prev & Next Vertical Navigation */}
-          <nav style={{
-            marginTop: '3rem',
-            paddingTop: '1.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.75rem',
-            fontSize: '0.9rem'
-          }}>
-            {prevPost && (
-              <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                  이전 글: 
-                </span>{' '}
-                <Link to={`/post/${prevPost.slug || prevPost.filename}`} style={{ color: 'var(--text-primary)' }}>
-                  {prevPost.title}
+          {(olderPost || newerPost) && (
+            <nav className="post-pager" aria-label="이전 글 / 다음 글">
+              {olderPost ? (
+                <Link to={`/post/${olderPost.slug || olderPost.filename}`} className="post-pager-item">
+                  <span className="post-pager-label">← 이전 글</span>
+                  <span className="post-pager-title">{olderPost.title}</span>
+                  <span className="post-pager-date">{olderPost.date}</span>
                 </Link>
-              </div>
-            )}
-            {nextPost && (
-              <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                  다음 글: 
-                </span>{' '}
-                <Link to={`/post/${nextPost.slug || nextPost.filename}`} style={{ color: 'var(--text-primary)' }}>
-                  {nextPost.title}
+              ) : <span />}
+              {newerPost ? (
+                <Link to={`/post/${newerPost.slug || newerPost.filename}`} className="post-pager-item is-next">
+                  <span className="post-pager-label">다음 글 →</span>
+                  <span className="post-pager-title">{newerPost.title}</span>
+                  <span className="post-pager-date">{newerPost.date}</span>
                 </Link>
-              </div>
-            )}
-          </nav>
+              ) : <span />}
+            </nav>
+          )}
         </article>
       </div>
     </div>

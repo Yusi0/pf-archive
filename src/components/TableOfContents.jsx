@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { generateHeadingSlug } from '../utils/customMarkdownParser';
 
-function extractHeadings(content) {
+/** Headings (h1-h4) of a markdown source, with the heading id and 0-based source line. */
+export function extractHeadings(content) {
   if (!content) return [];
 
   const slugCounts = new Map();
   return content
     .split('\n')
-    .map((line) => line.trim().match(/^(#{1,4})\s+(.*)$/))
-    .filter(Boolean)
-    .map((match) => {
+    .map((line, lineIndex) => ({ lineIndex, match: line.trim().match(/^(#{1,4})\s+(.*)$/) }))
+    .filter(({ match }) => match)
+    .map(({ lineIndex, match }) => {
       const level = match[1].length;
       const rawText = match[2].trim();
       const id = generateHeadingSlug(rawText, slugCounts);
@@ -22,7 +23,7 @@ function extractHeadings(content) {
         .replace(/[\[\]]/g, '')
         .trim();
 
-      return { level, text, id };
+      return { level, text, id, line: lineIndex };
     });
 }
 

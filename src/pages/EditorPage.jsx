@@ -1,8 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchContentPosts, saveContentPost, deleteContentPost, uploadImage } from '../utils/contentApi';
 import { stringifyFrontmatter } from '../utils/frontmatter';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import FontSizeControl from '../components/FontSizeControl';
+import { extractHeadings } from '../components/TableOfContents';
+import { ArrowLeftIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
+import '../styles/editor.css';
 
 export default function EditorPage() {
   const navigate = useNavigate();
@@ -269,196 +273,189 @@ New procedural recoil and movement inertia system is currently under testing.
 
   const [showHelpModal, setShowHelpModal] = useState(false);
 
+  // Narrow screens show one pane at a time
+  const [tab, setTab] = useState('edit');
+
+  // Follow the caret: scroll the preview to the heading the caret is under
+  const [syncOn, setSyncOn] = useState(() => {
+    try {
+      return localStorage.getItem('pf_editor_sync') !== '0';
+    } catch {
+      return true;
+    }
+  });
+  const previewRef = useRef(null);
+  const syncTimerRef = useRef(null);
+  const lastSyncedRef = useRef(null);
+  const headings = useMemo(() => extractHeadings(content), [content]);
+
+  useEffect(() => () => clearTimeout(syncTimerRef.current), []);
+
+  const toggleSync = () => {
+    const next = !syncOn;
+    setSyncOn(next);
+    lastSyncedRef.current = null;
+    try {
+      localStorage.setItem('pf_editor_sync', next ? '1' : '0');
+    } catch {
+      // Storage unavailable: the toggle still works for this session.
+    }
+  };
+
+  const syncPreviewToCaret = () => {
+    if (!syncOn) return;
+    clearTimeout(syncTimerRef.current);
+    syncTimerRef.current = setTimeout(() => {
+      const textarea = textareaRef.current;
+      const pane = previewRef.current;
+      if (!textarea || !pane || !pane.offsetParent) return; // preview hidden (narrow edit tab)
+
+      const caretLine = textarea.value.slice(0, textarea.selectionStart).split('\n').length - 1;
+      let target = null;
+      for (const heading of headings) {
+        if (heading.line <= caretLine) target = heading;
+        else break;
+      }
+
+      const key = target ? target.id : '__top__';
+      if (lastSyncedRef.current === key) return; // still in the same section: leave the preview where the reader put it
+      lastSyncedRef.current = key;
+
+      // Short hops animate; long jumps (e.g. Ctrl+End in a long post) land instantly instead of crawling.
+      const scrollPaneTo = (top) => {
+        const next = Math.max(0, top);
+        const far = Math.abs(next - pane.scrollTop) > pane.clientHeight * 2;
+        pane.scrollTo({ top: next, behavior: far ? 'auto' : 'smooth' });
+      };
+
+      if (!target) {
+        scrollPaneTo(0);
+        return;
+      }
+      const el = Array.from(pane.querySelectorAll('[id]')).find((node) => node.id === target.id);
+      if (!el) return;
+      scrollPaneTo(el.getBoundingClientRect().top - pane.getBoundingClientRect().top + pane.scrollTop - 12);
+    }, 150);
+  };
+
   return (
-    <div style={{ width: '100%', minHeight: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column' }}>
-      {/* Super Clean Centered Top Header Bar */}
-      <header style={{
-        borderBottom: '1px solid var(--border-subtle)',
-        backgroundColor: 'var(--bg-primary)'
-      }}>
-        <div style={{
-          maxWidth: '1300px',
-          margin: '0 auto',
-          padding: '0.9rem 1.5rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '0.88rem'
-        }}>
+    <div className="editor-app" data-tab={tab}>
+      <header className="editor-toolbar">
+        <button type="button" className="icon-btn" onClick={() => navigate('/')} aria-label="홈으로" title="홈으로">
+          <ArrowLeftIcon />
+        </button>
+
+        <div className="editor-status" aria-live="polite">
+          <span className="editor-filename">{filename || '새 글'}</span>
+          <span className={`editor-dirty${isSaved ? '' : ' is-visible'}`} title="저장되지 않은 변경 사항" aria-hidden={isSaved}>●</span>
+          {isUploading && <span className="editor-uploading">이미지 업로드 중…</span>}
+        </div>
+
+        <div className="editor-actions">
+          <FontSizeControl
+            storageKey="pf_editor_scale"
+            cssVar="--editor-scale"
+            smallerLabel="에디터 글자 작게"
+            largerLabel="에디터 글자 크게"
+          />
+          <span className="editor-divider" aria-hidden="true" />
           <button
-            onClick={() => navigate('/')}
-            style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}
+            type="button"
+            className={`icon-btn${syncOn ? ' is-active' : ''}`}
+            onClick={toggleSync}
+            aria-pressed={syncOn}
+            aria-label="프리뷰 따라가기"
+            title="커서가 있는 제목으로 프리뷰 이동"
           >
-            ← Home
+            <SyncIcon />
           </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {editId && (
-              <button onClick={handleDelete} style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-                Delete
-              </button>
-            )}
-
-            <button
-              onClick={() => setShowHelpModal(true)}
-              title="마크다운 문법 가이드"
-              type="button"
-              style={{
-                width: '22px',
-                height: '22px',
-                borderRadius: '50%',
-                border: '1px solid var(--border-subtle)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: 'var(--text-muted)',
-                backgroundColor: 'transparent',
-                cursor: 'pointer'
-              }}
-            >
-              ?
+          <button type="button" className="icon-btn" onClick={() => setShowHelpModal(true)} aria-label="마크다운 문법 가이드" title="마크다운 문법 가이드">
+            <HelpIcon />
+          </button>
+          {editId && (
+            <button type="button" className="icon-btn is-danger" onClick={handleDelete} aria-label="삭제" title="삭제">
+              <TrashIcon />
             </button>
-
-            {isUploading && (
-              <span style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 600 }}>
-                이미지 업로드 중...
-              </span>
-            )}
-
-            <button
-              onClick={handleSave}
-              style={{
-                color: isSaved ? 'var(--text-muted)' : 'var(--text-primary)',
-                fontWeight: 700,
-                fontSize: '0.88rem'
-              }}
-            >
-              Save (Ctrl+S)
-            </button>
-          </div>
+          )}
+          <button
+            type="button"
+            className={`icon-btn editor-save${isSaved ? '' : ' is-dirty'}`}
+            onClick={handleSave}
+            aria-label="저장"
+            title="저장"
+          >
+            <SaveIcon />
+          </button>
         </div>
       </header>
 
-      {/* Centered Split View Layout */}
-      <div style={{
-        maxWidth: '1300px',
-        width: '100%',
-        margin: '0 auto',
-        flex: 1,
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        minHeight: 0
-      }}>
-        {/* Left: Editor Pane */}
-        <div style={{
-          borderRight: '1px solid var(--border-subtle)',
-          padding: '1.75rem 1.5rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1.25rem',
-          overflowY: 'auto'
-        }}>
-          {/* Inputs */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => { setDate(e.target.value); setIsSaved(false); }}
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.8rem',
-                color: 'var(--text-muted)',
-                backgroundColor: 'transparent',
-                border: 'none',
-                outline: 'none',
-                width: '130px'
-              }}
-            />
+      {/* Shared meta row: sits above both panes so their bodies start at the same height */}
+      <div className="editor-meta">
+        <input
+          type="date"
+          className="meta-date"
+          value={date}
+          onChange={(e) => { setDate(e.target.value); setIsSaved(false); }}
+          aria-label="날짜"
+        />
+        <input
+          type="text"
+          className="meta-title"
+          placeholder="문서 제목을 입력하세요..."
+          value={title}
+          onChange={(e) => { setTitle(e.target.value); setIsSaved(false); }}
+          aria-label="제목"
+        />
+        <input
+          type="text"
+          className="meta-summary"
+          placeholder="짧은 요약 (선택)..."
+          value={summary}
+          onChange={(e) => { setSummary(e.target.value); setIsSaved(false); }}
+          aria-label="요약"
+        />
+      </div>
 
-            <input
-              type="text"
-              placeholder="문서 제목을 입력하세요..."
-              value={title}
-              onChange={(e) => { setTitle(e.target.value); setIsSaved(false); }}
-              style={{
-                fontSize: '1.35rem',
-                fontWeight: 800,
-                color: 'var(--text-primary)',
-                backgroundColor: 'transparent',
-                border: 'none',
-                outline: 'none',
-                width: '100%'
-              }}
-            />
+      <div className="editor-tabs" role="tablist">
+        <button type="button" role="tab" aria-selected={tab === 'edit'} className={`editor-tab${tab === 'edit' ? ' is-active' : ''}`} onClick={() => setTab('edit')}>
+          EDIT
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'preview'} className={`editor-tab${tab === 'preview' ? ' is-active' : ''}`} onClick={() => setTab('preview')}>
+          PREVIEW
+        </button>
+      </div>
 
-            <input
-              type="text"
-              placeholder="짧은 요약 (선택)..."
-              value={summary}
-              onChange={(e) => { setSummary(e.target.value); setIsSaved(false); }}
-              style={{
-                fontSize: '0.88rem',
-                color: 'var(--text-secondary)',
-                backgroundColor: 'transparent',
-                border: 'none',
-                outline: 'none',
-                width: '100%'
-              }}
-            />
-          </div>
-
-          {/* Textarea */}
+      <div className="editor-split">
+        <section className="editor-pane editor-pane-edit" aria-label="편집">
+          <div className="editor-pane-head">EDIT</div>
           <textarea
             ref={textareaRef}
+            className="editor-textarea"
             value={content}
             onChange={(e) => { setContent(e.target.value); setIsSaved(false); }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
+            onSelect={syncPreviewToCaret}
             placeholder="Markdown 문서 내용을 작성하세요..."
-            style={{
-              flex: 1,
-              width: '100%',
-              minHeight: '460px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '0.94rem',
-              lineHeight: 1.85,
-              color: 'var(--text-primary)',
-              backgroundColor: 'transparent',
-              border: 'none',
-              outline: 'none',
-              resize: 'none'
-            }}
+            spellCheck={false}
           />
-        </div>
+        </section>
 
-        {/* Right: Live Preview Pane */}
-        <div style={{
-          padding: '1.75rem 1.5rem',
-          overflowY: 'auto',
-          backgroundColor: 'var(--bg-primary)'
-        }}>
-          <div style={{
-            fontSize: '0.75rem',
-            color: 'var(--text-muted)',
-            fontFamily: 'var(--font-mono)',
-            marginBottom: '1rem'
-          }}>
-            PREVIEW
+        <section className="editor-pane editor-pane-preview" aria-label="미리보기">
+          <div className="editor-pane-head">PREVIEW</div>
+          <div className="editor-preview-scroll" ref={previewRef}>
+            <article className="editor-preview-col">
+              <header className="article-header">
+                <h1 className="article-title">{title || '제목 없음'}</h1>
+                <div className="article-meta-bar">
+                  <span>{date}</span>
+                </div>
+              </header>
+
+              <MarkdownRenderer content={content} />
+            </article>
           </div>
-
-          <article>
-            <header className="article-header">
-              <h1 className="article-title">{title || '제목 없음'}</h1>
-              <div className="article-meta-bar">
-                <span>{date}</span>
-              </div>
-            </header>
-
-            <MarkdownRenderer content={content} />
-          </article>
-        </div>
+        </section>
       </div>
 
       {/* Markdown Help Modal Popover */}

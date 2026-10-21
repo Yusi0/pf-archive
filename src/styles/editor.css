@@ -1,0 +1,251 @@
+/* Editor (dev only). Full-viewport app layout: toolbar, shared meta row, then two panes
+   whose heads share one height so EDIT and PREVIEW bodies always start at the same y. */
+
+.app-shell[data-layout='editor'] {
+  min-height: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* <main> must be a height-capped flex column so .editor-app can fill it instead of growing with its content */
+.app-shell[data-layout='editor'] .app-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-app {
+  --editor-head-h: 2.25rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  background-color: var(--bg-primary);
+}
+
+/* Toolbar */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.3rem 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.editor-status {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.editor-filename {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-dirty {
+  color: #f59e0b;
+  font-size: 0.6rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.editor-dirty.is-visible {
+  opacity: 1;
+}
+
+.editor-uploading {
+  color: #f59e0b;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.editor-divider {
+  width: 1px;
+  height: 1rem;
+  margin: 0 0.35rem;
+  background-color: var(--border-strong);
+}
+
+.editor-save:not(.is-dirty) {
+  color: var(--text-muted);
+}
+
+.editor-save.is-dirty {
+  color: var(--text-strong);
+}
+
+/* Shared meta row (date / title / summary) */
+.editor-meta {
+  display: grid;
+  grid-template-columns: 9.5rem 1fr;
+  gap: 0.1rem 1rem;
+  flex-shrink: 0;
+  padding: 0.7rem 1.5rem 0.55rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.meta-date {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.meta-title {
+  width: 100%;
+  min-width: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.meta-summary {
+  grid-column: 1 / -1;
+  width: 100%;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.meta-title::placeholder,
+.meta-summary::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* Narrow-screen tabs (hidden on wide screens) */
+.editor-tabs {
+  display: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.editor-tab {
+  flex: 1;
+  height: 2.5rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+}
+
+.editor-tab.is-active {
+  color: var(--text-strong);
+  border-bottom-color: var(--text-strong);
+}
+
+/* Split */
+.editor-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  /* A single row capped to the available height: without this the row grows to the content
+     and the panes stop scrolling independently. */
+  grid-template-rows: minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+}
+
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.editor-pane-edit {
+  border-right: 1px solid var(--border-subtle);
+}
+
+.editor-pane-head {
+  display: flex;
+  align-items: center;
+  flex: 0 0 var(--editor-head-h);
+  height: var(--editor-head-h);
+  padding: 0 1.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Left body: the textarea scrolls itself (native caret handling) */
+.editor-textarea {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  padding: 1.25rem 1.5rem 3rem;
+  resize: none;
+  font-family: var(--font-mono);
+  /* --editor-scale is set by the editor's font size control */
+  font-size: calc(0.94rem * var(--editor-scale, 1));
+  line-height: 1.85;
+  color: var(--text-primary);
+  tab-size: 4;
+}
+
+.editor-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Right body: the pane scrolls; the column matches the real reading width */
+.editor-preview-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.editor-preview-col {
+  max-width: calc(var(--max-width) + 3rem);
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 4rem;
+}
+
+@media (max-width: 900px) {
+  .editor-meta {
+    grid-template-columns: 1fr;
+    padding: 0.55rem 1rem 0.4rem;
+  }
+
+  .editor-tabs {
+    display: flex;
+  }
+
+  .editor-pane-head {
+    display: none;
+  }
+
+  .editor-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-pane-edit {
+    border-right: 0;
+  }
+
+  .editor-app[data-tab='edit'] .editor-pane-preview,
+  .editor-app[data-tab='preview'] .editor-pane-edit {
+    display: none;
+  }
+
+  .editor-textarea {
+    padding: 1rem 1rem 3rem;
+  }
+
+  .editor-preview-col {
+    padding: 1rem 1rem 4rem;
+  }
+}

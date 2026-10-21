@@ -36,9 +36,14 @@
   --font-mono: 'Jetendard', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 
   --max-width: 680px;
+  --toc-width: 230px;
+  --toc-gap: 3.5rem;
+
+  color-scheme: dark;
 }
 
 [data-theme='light'] {
+  color-scheme: light;
   --bg-primary: rgb(225, 225, 225);
   --bg-secondary: rgb(215, 215, 215);
   --text-strong: rgb(30, 30, 30);
@@ -134,7 +139,6 @@ input, textarea {
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
   cursor: pointer;
 }
 
@@ -144,6 +148,62 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+/* App frame: header/footer follow --shell-width so the logo lines up with the page's content column */
+.app-shell {
+  --shell-width: var(--max-width);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Post pages: TOC column + gap + reading column (+ side padding) */
+.app-shell[data-layout='wide'] {
+  --shell-width: calc(var(--toc-width) + var(--toc-gap) + var(--max-width) + 3rem);
+}
+
+.app-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.shell-inner {
+  width: 100%;
+  max-width: var(--shell-width);
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Shared icon-only button */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--text-secondary);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.icon-btn:hover:not(:disabled) {
+  color: var(--text-strong);
+  background-color: var(--hover-tint);
+}
+
+.icon-btn.is-danger:hover:not(:disabled) {
+  color: #f87171;
+}
+
+.icon-btn.is-active {
+  color: var(--text-strong);
+}
+
+.icon-btn:focus-visible,
+.size-btn:focus-visible,
+.post-back:focus-visible {
+  outline: 2px solid var(--text-secondary);
+  outline-offset: 2px;
 }
 
 /* Plain Text Header */
@@ -185,18 +245,94 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-secondary);
 }
 
-/* Plain Text List */
+/* Home toolbar: count + (dev) new post on the left, filter on the right */
+.home-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-top: 0.5rem;
+}
+
+.home-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  white-space: nowrap;
+}
+
+.home-count {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.home-new {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.home-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 0 1 14rem;
+  min-width: 0;
+  padding: 0.3rem 0;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-strong);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.home-filter:focus-within {
+  color: var(--text-secondary);
+  border-bottom-color: var(--text-secondary);
+}
+
+.home-filter input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.home-filter input::placeholder {
+  color: var(--text-muted);
+}
+
+.home-filter input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.home-empty {
+  padding: 2rem 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Plain Text List: whole row is the link */
 .post-list-vertical {
   display: flex;
   flex-direction: column;
-  gap: 1.8rem;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
 }
 
-.post-item-row {
+.post-item-row + .post-item-row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.post-item-link {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  padding: 1.15rem 0;
+}
+
+.post-item-link:hover {
+  text-decoration: none;
+  color: inherit;
 }
 
 .post-item-meta {
@@ -207,14 +343,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .post-item-title {
   font-size: 1.15rem;
   font-weight: 700;
+  line-height: 1.45;
   word-break: keep-all;
   overflow-wrap: break-word;
   text-wrap: balance;
+  transition: color 0.15s ease;
+}
+
+.post-item-link:hover .post-item-title {
+  color: var(--text-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .post-item-summary {
   font-size: 0.92rem;
   color: var(--text-secondary);
+  line-height: 1.65;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 /* Article Styling */
@@ -245,18 +396,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .post-layout-container {
   width: 100%;
-  max-width: 1060px;
+  max-width: var(--shell-width);
   margin: 0 auto;
   padding: 2.2rem 1.5rem 5rem 1.5rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 3.5rem;
+  gap: var(--toc-gap);
 }
 
 /* Left Sidebar Table of Contents: Quiet, Simple, Modern, Borderless */
 .post-toc-sidebar {
-  width: 230px;
+  width: var(--toc-width);
   flex-shrink: 0;
   position: sticky;
   top: 2.5rem;
@@ -365,6 +516,100 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-muted);
 }
 
+.post-back {
+  padding: 0;
+  font-size: inherit;
+  color: var(--text-muted);
+}
+
+.post-back:hover {
+  color: var(--text-strong);
+}
+
+.post-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.post-edit-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.post-missing {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+}
+
+.post-missing p {
+  color: var(--text-muted);
+}
+
+.post-missing-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+}
+
+/* Older / newer post navigation (older on the left, newer on the right) */
+.post-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.post-pager-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-subtle);
+  transition: border-color 0.15s ease;
+}
+
+.post-pager-item.is-next {
+  text-align: right;
+}
+
+.post-pager-item:hover {
+  text-decoration: none;
+  color: inherit;
+  border-color: var(--border-strong);
+}
+
+.post-pager-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.post-pager-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.45;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.post-pager-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+  .post-pager {
+    grid-template-columns: 1fr;
+  }
+
+  .post-pager-item.is-next {
+    text-align: left;
+  }
+}
+
 /* Back to top (bottom-right, fades/slides in after scrolling) */
 .back-to-top {
   position: fixed;
@@ -406,34 +651,34 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   transition: transform 0.15s ease;
 }
 
-/* Reading size control */
-.reading-size {
+/* Font size stepper (reading size on posts, editor size in the editor) */
+.size-control {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.reading-size-btn {
+.size-btn {
   min-width: 2rem;
   min-height: 2rem;
   color: var(--text-secondary);
   line-height: 1;
 }
 
-.reading-size-btn:hover:not(:disabled) {
+.size-btn:hover:not(:disabled) {
   color: var(--text-strong);
 }
 
-.reading-size-btn:disabled {
+.size-btn:disabled {
   opacity: 0.35;
   cursor: default;
 }
 
-.reading-size-small {
+.size-btn-small {
   font-size: 0.78rem;
 }
 
-.reading-size-large {
+.size-btn-large {
   font-size: 1.05rem;
 }
 

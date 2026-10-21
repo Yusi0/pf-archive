@@ -2,25 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchContentPosts } from '../utils/contentApi';
 import PostListItem from '../components/PostListItem';
+import { SearchIcon } from '../components/Icons';
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchContentPosts().then(setPosts).catch(err => setError(err.message));
   }, []);
 
+  const term = searchTerm.trim().toLowerCase();
   const filteredPosts = posts.filter(post =>
-    post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (post.summary && post.summary.toLowerCase().includes(searchTerm.toLowerCase()))
+    post.title.toLowerCase().includes(term) ||
+    (post.summary && post.summary.toLowerCase().includes(term))
   );
 
   return (
-    <div className="container" style={{ paddingTop: '1.5rem', paddingBottom: '4rem' }}>
-      {/* Intro */}
+    <div className="container home">
       <section className="home-intro">
         <h1 className="home-intro-title">Phantom Forces Archive</h1>
         <p className="home-intro-desc">
@@ -28,45 +28,26 @@ export default function HomePage() {
         </p>
       </section>
 
-      {/* Index Header & New Post Link */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingBottom: '0.85rem',
-        borderBottom: '1px solid var(--border-subtle)',
-        marginBottom: '1.75rem'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-            TIMELINE ({filteredPosts.length})
-          </span>
+      <div className="home-toolbar">
+        <div className="home-toolbar-left">
+          <span className="home-count">글 {filteredPosts.length}개</span>
           {import.meta.env.DEV && (
-            <Link
-              to="/editor"
-              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums', textDecoration: 'underline' }}
-            >
-              [+ Editor / 글쓰기]
-            </Link>
+            <Link to="/editor" className="home-new">+ 새 글</Link>
           )}
         </div>
 
-        <input
-          type="text"
-          placeholder="Filter..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            color: 'var(--text-primary)',
-            fontSize: '0.85rem',
-            outline: 'none',
-            fontVariantNumeric: 'tabular-nums',
-            width: '120px'
-          }}
-        />
+        <label className="home-filter">
+          <SearchIcon size={14} />
+          <input
+            type="search"
+            placeholder="제목, 요약 검색"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="글 검색"
+          />
+        </label>
       </div>
 
-      {/* Vertical Timeline Post Index */}
       {filteredPosts.length > 0 ? (
         <div className="post-list-vertical">
           {filteredPosts.map((post) => (
@@ -74,16 +55,12 @@ export default function HomePage() {
           ))}
         </div>
       ) : (
-        <div style={{ padding: '2rem 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-          {error ? `글 목록을 불러오지 못했습니다. (${error})` : '아직 작성된 아카이브 기록이 없습니다.'}
-          {import.meta.env.DEV && !error && (
-            <>
-              {' '}
-              <Link to="/editor" style={{ textDecoration: 'underline' }}>
-                에디터에서 새 기록을 작성해보세요.
-              </Link>
-            </>
-          )}
+        <div className="home-empty">
+          {error
+            ? `글 목록을 불러오지 못했습니다. (${error})`
+            : term
+              ? '검색 결과가 없습니다.'
+              : '아직 작성된 아카이브 기록이 없습니다.'}
         </div>
       )}
     </div>
