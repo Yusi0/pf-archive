@@ -4,6 +4,7 @@ import { EditorView, keymap, placeholder as placeholderExt } from '@codemirror/v
 import { defaultKeymap, history, historyKeymap, indentLess, insertTab, redo } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import { editorTheme } from './theme';
+import { slashMenu } from './slashMenu';
 import { sourceStyle } from './sourceStyle';
 import { liveStyle } from './liveStyle';
 import { blockWidgets } from './blockWidgets';
@@ -86,6 +87,7 @@ const CodeEditor = forwardRef(function CodeEditor(
         EditorView.contentAttributes.of({ spellcheck: 'false', autocorrect: 'off', autocapitalize: 'off' }),
         placeholder ? placeholderExt(placeholder) : [],
         editorTheme,
+        slashMenu,
         modeCompartment.current.of(modeExtension(mode)),
         EditorView.domEventHandlers({
           paste(event) {

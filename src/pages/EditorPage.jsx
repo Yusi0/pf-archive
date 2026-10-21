@@ -538,7 +538,45 @@ New procedural recoil and movement inertia system is currently under testing.
 
               <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
-                  9. 단축키 (Shortcuts)
+                  9. 콜아웃 (Callout)
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
+                  <code>{`> [!info] 제목
+> 본문 (종류: info / note / warning / danger)
+> 제목은 생략하면 종류 이름이 표시됩니다.`}</code>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+                  10. 표 헤더 · 서브텍스트 · 화살표
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
+                  <code>{`| 항목 | 값 |
+|---|---|     ← 이 줄이 있으면 첫 줄이 헤더
+| 사거리 | 50 |
+
+-# 작고 흐린 한 줄 (서브텍스트)
+650 -> 540  →  650 → 540`}</code>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+                  11. 슬래시 메뉴 (/)
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
+                  <code>{`줄 맨 앞에서 / 를 입력하면 템플릿 메뉴가 열립니다.
+/weapon  무기 틀      /graph  그래프 블록
+/fold    접기 블록    /callout  안내 상자
+/table   헤더 있는 표
+Enter 로 선택, Tab / Shift+Tab 으로 빈칸 이동`}</code>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+                  12. 단축키 (Shortcuts)
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.3rem', fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                   <div><code>Ctrl + S</code> : 저장</div>
