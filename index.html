@@ -3,10 +3,19 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PF Archive</title>
   <meta name="description" content="Phantom Forces PF Revamp, 밸런스 패치, 총기/맵 리워크 분석 및 패치노트 아카이빙 블로그" />
+
+  <!-- Apply saved theme before first paint (avoids dark -> light flash) -->
+  <script>
+    try {
+      document.documentElement.setAttribute('data-theme', localStorage.getItem('pf_theme') || 'dark');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
 
   <!-- Open Graph / Discord Embed -->
   <meta property="og:type" content="website" />
@@ -14,19 +23,17 @@
   <meta property="og:url" content="https://yusi0.github.io/pf-archive/" />
   <meta property="og:title" content="PF Archive" />
   <meta property="og:description" content="Phantom Forces PF Revamp, 밸런스 패치, 총기/맵 리워크 분석 및 패치노트 아카이빙 블로그" />
-  <meta name="theme-color" content="#1a1d24" />
+  <meta name="theme-color" content="#121212" />
 
   <!-- Twitter Card -->
   <meta property="twitter:card" content="summary" />
   <meta property="twitter:title" content="PF Archive" />
   <meta property="twitter:description" content="Phantom Forces PF Revamp, 밸런스 패치, 총기/맵 리워크 분석 및 패치노트 아카이빙 블로그" />
-  <!-- Pretendard JP CDN -->
+
+  <!-- Pretendard Variable (dynamic subset) -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" as="style" crossorigin
-    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-jp.min.css" />
-  <!-- JetBrains Mono for Code Blocks -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 </head>
 
 <body>

@@ -87,7 +87,7 @@ export function FootnoteReference({ id, num, text }) {
           }}
         >
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
-            <span style={{ fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
               {toSuperscript(num)}
             </span>
             <div dangerouslySetInnerHTML={{ __html: parsedTextHtml }} />
@@ -124,7 +124,7 @@ export function FootnoteSection({ footnotes }) {
       <h4 style={{
         fontSize: '0.85rem',
         color: 'var(--text-muted)',
-        fontFamily: 'var(--font-mono)',
+        fontVariantNumeric: 'tabular-nums',
         marginBottom: '0.85rem',
         letterSpacing: '0.05em'
       }}>

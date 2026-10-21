@@ -38,13 +38,13 @@ export default function HomePage() {
         marginBottom: '1.75rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
             TIMELINE ({filteredPosts.length})
           </span>
           {import.meta.env.DEV && (
             <Link
               to="/editor"
-              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textDecoration: 'underline' }}
+              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums', textDecoration: 'underline' }}
             >
               [+ Editor / 글쓰기]
             </Link>
@@ -60,7 +60,7 @@ export default function HomePage() {
             color: 'var(--text-primary)',
             fontSize: '0.85rem',
             outline: 'none',
-            fontFamily: 'var(--font-mono)',
+            fontVariantNumeric: 'tabular-nums',
             width: '120px'
           }}
         />

@@ -110,7 +110,7 @@ export default function PostDetailPage() {
           }}>
             {prevPost && (
               <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
                   이전 글: 
                 </span>{' '}
                 <Link to={`/post/${prevPost.slug || prevPost.filename}`} style={{ color: 'var(--text-primary)' }}>
@@ -120,7 +120,7 @@ export default function PostDetailPage() {
             )}
             {nextPost && (
               <div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
                   다음 글: 
                 </span>{' '}
                 <Link to={`/post/${nextPost.slug || nextPost.filename}`} style={{ color: 'var(--text-primary)' }}>

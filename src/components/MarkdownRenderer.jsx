@@ -313,7 +313,7 @@ export default function MarkdownRenderer({ content }) {
           }}
         >
           <div style={{ display: 'flex', gap: '0.55rem', alignItems: 'flex-start' }}>
-            <span style={{ fontWeight: 700, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontWeight: 700, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
               {popover.number}
             </span>
             <div dangerouslySetInnerHTML={{ __html: popover.content }} />
@@ -334,7 +334,7 @@ export default function MarkdownRenderer({ content }) {
           <h4 style={{
             fontSize: '0.82rem',
             color: 'var(--text-muted)',
-            fontFamily: 'var(--font-mono)',
+            fontVariantNumeric: 'tabular-nums',
             marginBottom: '0.85rem',
             letterSpacing: '0.05em'
           }}>
