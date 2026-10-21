@@ -4,6 +4,7 @@ import { fetchContentPosts } from '../utils/contentApi';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
 import ReadingSizeControl from '../components/ReadingSizeControl';
+import BackToTop from '../components/BackToTop';
 
 export default function PostDetailPage() {
   const { slug } = useParams();
@@ -65,6 +66,7 @@ export default function PostDetailPage() {
 
   return (
     <div className="post-page-wrapper">
+      <BackToTop />
       <div className="post-layout-container">
         {/* Left Sticky Sidebar: TOC */}
         <aside className="post-toc-sidebar">

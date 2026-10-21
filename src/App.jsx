@@ -14,6 +14,9 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('pf_theme', theme);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#1e1e1e' : '#e1e1e1');
   }, [theme]);
 
   const toggleTheme = () => {

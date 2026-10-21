@@ -261,7 +261,7 @@ export default function WeaponDamageGraph({ graphData }) {
                   y1={yPos}
                   x2={svgWidth - margin.right}
                   y2={yPos}
-                  stroke="rgba(255, 255, 255, 0.04)"
+                  style={{ stroke: 'var(--text-primary)', strokeOpacity: 0.06 }}
                   strokeWidth="1"
                 />
                 <text
@@ -287,7 +287,7 @@ export default function WeaponDamageGraph({ graphData }) {
                   y1={svgHeight - margin.bottom}
                   x2={xPos}
                   y2={svgHeight - margin.bottom + 4}
-                  stroke="rgba(255, 255, 255, 0.15)"
+                  style={{ stroke: 'var(--text-primary)', strokeOpacity: 0.22 }}
                 />
                 <text
                   x={xPos}
@@ -308,7 +308,7 @@ export default function WeaponDamageGraph({ graphData }) {
             y1={svgHeight - margin.bottom}
             x2={svgWidth - margin.right}
             y2={svgHeight - margin.bottom}
-            stroke="rgba(255, 255, 255, 0.1)"
+            style={{ stroke: 'var(--text-primary)', strokeOpacity: 0.16 }}
             strokeWidth="1"
           />
 
@@ -379,7 +379,7 @@ export default function WeaponDamageGraph({ graphData }) {
                 y1={margin.top}
                 x2={xToSvg(hoverData.range)}
                 y2={svgHeight - margin.bottom}
-                stroke="rgba(255, 255, 255, 0.2)"
+                style={{ stroke: 'var(--text-primary)', strokeOpacity: 0.3 }}
                 strokeDasharray="2,2"
                 strokeWidth="1"
               />

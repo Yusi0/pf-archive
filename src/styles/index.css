@@ -15,18 +15,21 @@
   font-display: swap;
 }
 
+/* Palette rule: no pure white / pure black anywhere. "White" = rgb(225), "black" = rgb(30).
+   Dark: bg black, text white.  Light: bg white, text black. */
 :root {
-  --bg-primary: #121212;
-  --bg-secondary: #181818;
-  --text-strong: #ffffff;
-  --text-primary: #e0e0e0;
-  --text-secondary: #999999;
-  --text-muted: #666666;
+  --bg-primary: rgb(30, 30, 30);
+  --bg-secondary: rgb(38, 38, 38);
+  --text-strong: rgb(225, 225, 225);
+  --text-primary: rgb(200, 200, 200);
+  --text-secondary: rgb(154, 154, 154);
+  --text-muted: rgb(115, 115, 115);
 
-  --border-subtle: #222222;
-  --hairline: rgba(255, 255, 255, 0.08);
-  --hover-tint: rgba(255, 255, 255, 0.08);
-  --scroll-thumb: #333333;
+  --border-subtle: rgb(46, 46, 46);
+  --border-strong: rgb(66, 66, 66);
+  --hairline: rgba(225, 225, 225, 0.09);
+  --hover-tint: rgba(225, 225, 225, 0.09);
+  --scroll-thumb: rgb(60, 60, 60);
 
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', sans-serif;
   /* Monospace is reserved for code (pre/code). Never use it for UI text or dates. */
@@ -36,17 +39,26 @@
 }
 
 [data-theme='light'] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f6f6f6;
-  --text-strong: #000000;
-  --text-primary: #111111;
-  --text-secondary: #555555;
-  --text-muted: #888888;
+  --bg-primary: rgb(225, 225, 225);
+  --bg-secondary: rgb(215, 215, 215);
+  --text-strong: rgb(30, 30, 30);
+  --text-primary: rgb(45, 45, 45);
+  --text-secondary: rgb(86, 86, 86);
+  --text-muted: rgb(105, 105, 105);
 
-  --border-subtle: #eeeeee;
-  --hairline: rgba(0, 0, 0, 0.08);
-  --hover-tint: rgba(0, 0, 0, 0.06);
-  --scroll-thumb: #d4d4d4;
+  --border-subtle: rgb(204, 204, 204);
+  --border-strong: rgb(178, 178, 178);
+  --hairline: rgba(30, 30, 30, 0.1);
+  --hover-tint: rgba(30, 30, 30, 0.07);
+  --scroll-thumb: rgb(186, 186, 186);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .back-to-top,
+  .toc-panel,
+  .toc-bar-chevron {
+    transition: none !important;
+  }
 }
 
 /* Reset */
@@ -353,6 +365,47 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-muted);
 }
 
+/* Back to top (bottom-right, fades/slides in after scrolling) */
+.back-to-top {
+  position: fixed;
+  right: max(1.25rem, env(safe-area-inset-right));
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-strong);
+  opacity: 0;
+  transform: translateY(0.75rem);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s, color 0.15s ease;
+}
+
+.back-to-top.is-visible {
+  opacity: 1;
+  transform: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s, color 0.15s ease;
+}
+
+.back-to-top:hover {
+  color: var(--text-strong);
+}
+
+.back-to-top:active svg {
+  transform: translateY(-2px);
+}
+
+.back-to-top svg {
+  transition: transform 0.15s ease;
+}
+
 /* Reading size control */
 .reading-size {
   display: inline-flex;
@@ -446,8 +499,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transform: rotate(180deg);
   }
 
+  /* Always rendered so it can animate: revealed top-down with a short fade/slide.
+     visibility removes the closed panel from tab order and hit testing. */
   .toc-panel {
-    display: none;
     position: absolute;
     top: 100%;
     left: 0;
@@ -458,6 +512,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     background-color: var(--bg-primary);
     border-bottom: 1px solid var(--border-subtle);
     box-shadow: 0 14px 18px -14px rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease, clip-path 0.2s ease, visibility 0s linear 0.2s;
   }
 
   .custom-table td {
@@ -465,7 +525,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
   .sidebar-toc.is-open .toc-panel {
-    display: block;
+    opacity: 1;
+    transform: none;
+    clip-path: inset(0 0 -24px 0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.2s ease, transform 0.2s ease, clip-path 0.2s ease, visibility 0s;
   }
 
   .toc-panel .sidebar-toc-title {
