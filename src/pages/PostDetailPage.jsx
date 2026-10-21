@@ -17,7 +17,21 @@ export default function PostDetailPage() {
 
     async function load() {
       const loaded = await fetchContentPosts();
-      const postIndex = loaded.findIndex(p => p.slug === slug || p.id === slug || p.filename === slug);
+      let postIndex = loaded.findIndex(p => p.slug === slug || p.id === slug || p.filename === slug);
+
+      // Backwards-compatibility fallback for older URL slugs
+      if (postIndex === -1 && slug) {
+        const decoded = decodeURIComponent(slug).toLowerCase();
+        if (decoded.includes('11170') || decoded.includes('2026-10-03')) {
+          postIndex = loaded.findIndex(p => p.slug === '2026-10-03-01');
+        } else if (decoded.includes('250505') || decoded.includes('axisangle')) {
+          postIndex = loaded.findIndex(p => p.slug === '2026-09-24-02');
+        } else if (decoded.includes('250419') || (decoded.includes('2026-09-24') && decoded.includes('lito'))) {
+          postIndex = loaded.findIndex(p => p.slug === '2026-09-24-01');
+        } else if (decoded.includes('2025-04-07') || decoded.includes('250407')) {
+          postIndex = loaded.findIndex(p => p.slug === '2025-04-07-01');
+        }
+      }
 
       if (postIndex >= 0) {
         setPost(loaded[postIndex]);

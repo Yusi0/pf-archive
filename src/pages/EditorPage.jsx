@@ -35,9 +35,9 @@ export default function EditorPage() {
         }
       }
 
-      // Default sample with updated # delimiter custom syntax
+      // Default sample with clean date + sequence filename
       const defaultDate = new Date().toISOString().split('T')[0];
-      setFilename(`update-${defaultDate}.md`);
+      setFilename(`${defaultDate}-01.md`);
       setTitle('[PF Revamp] 테스트 서버 업데이트 기록');
       setDate(defaultDate);
       setSummary('');
@@ -80,11 +80,17 @@ New procedural recoil and movement inertia system is currently under testing.
 
     let targetFilename = filename;
     if (!targetFilename || targetFilename.startsWith('update-')) {
-      const slugTitle = title
-        .toLowerCase()
-        .replace(/[^\w\s가-힣-]/g, '')
-        .replace(/\s+/g, '-');
-      targetFilename = `${date}-${slugTitle || 'entry'}.md`;
+      try {
+        const existingPosts = await fetchContentPosts();
+        const sameDatePosts = existingPosts.filter(p => p.filename && p.filename.startsWith(date));
+        let seq = 1;
+        while (sameDatePosts.some(p => p.filename === `${date}-${String(seq).padStart(2, '0')}.md`)) {
+          seq++;
+        }
+        targetFilename = `${date}-${String(seq).padStart(2, '0')}.md`;
+      } catch {
+        targetFilename = `${date}-01.md`;
+      }
     }
 
     try {
