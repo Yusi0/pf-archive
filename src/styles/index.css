@@ -631,6 +631,28 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-secondary);
 }
 
+/* Compact prev/next icons in the top bar: only where the TOC has collapsed */
+.post-step-nav {
+  display: none;
+  align-items: center;
+}
+
+.post-step-nav .icon-btn {
+  width: 2rem;
+  height: 2rem;
+}
+
+.icon-btn.is-disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+@media (max-width: 1169px) {
+  .post-step-nav {
+    display: inline-flex;
+  }
+}
+
 /* Older / newer post navigation (older on the left, newer on the right) */
 .post-pager {
   display: grid;

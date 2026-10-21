@@ -5,6 +5,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
 import FontSizeControl from '../components/FontSizeControl';
 import PostTimeline from '../components/PostTimeline';
+import { ChevronLeftIcon, ChevronRightIcon } from '../components/Icons';
 import BackToTop from '../components/BackToTop';
 
 export default function PostDetailPage() {
@@ -88,6 +89,23 @@ export default function PostDetailPage() {
             </button>
 
             <div className="post-nav-actions">
+              {/* Compact prev/next (narrow layouts only; wide layouts have the timeline) */}
+              <div className="post-step-nav">
+                {olderPost ? (
+                  <Link to={`/post/${olderPost.slug || olderPost.filename}`} className="icon-btn" aria-label="이전 글" title="이전 글">
+                    <ChevronLeftIcon />
+                  </Link>
+                ) : (
+                  <span className="icon-btn is-disabled" aria-label="이전 글 없음" role="img"><ChevronLeftIcon /></span>
+                )}
+                {newerPost ? (
+                  <Link to={`/post/${newerPost.slug || newerPost.filename}`} className="icon-btn" aria-label="다음 글" title="다음 글">
+                    <ChevronRightIcon />
+                  </Link>
+                ) : (
+                  <span className="icon-btn is-disabled" aria-label="다음 글 없음" role="img"><ChevronRightIcon /></span>
+                )}
+              </div>
               {import.meta.env.DEV && (
                 <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} className="post-edit-link">
                   [Edit / 수정]
