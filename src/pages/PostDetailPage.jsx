@@ -4,6 +4,7 @@ import { fetchContentPosts } from '../utils/contentApi';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
 import FontSizeControl from '../components/FontSizeControl';
+import PostTimeline from '../components/PostTimeline';
 import BackToTop from '../components/BackToTop';
 
 export default function PostDetailPage() {
@@ -12,6 +13,7 @@ export default function PostDetailPage() {
   const location = useLocation();
 
   const [post, setPost] = useState(null);
+  const [allPosts, setAllPosts] = useState([]);
   const [olderPost, setOlderPost] = useState(null);
   const [newerPost, setNewerPost] = useState(null);
   const [error, setError] = useState(null);
@@ -51,6 +53,7 @@ export default function PostDetailPage() {
 
       if (postIndex >= 0) {
         // `loaded` is sorted newest first: the previous index is the newer post.
+        setAllPosts(loaded);
         setPost(loaded[postIndex]);
         setNewerPost(postIndex > 0 ? loaded[postIndex - 1] : null);
         setOlderPost(postIndex < loaded.length - 1 ? loaded[postIndex + 1] : null);
@@ -127,6 +130,10 @@ export default function PostDetailPage() {
             </nav>
           )}
         </article>
+
+        <aside className="post-timeline-sidebar">
+          <PostTimeline posts={allPosts} currentSlug={post.slug} />
+        </aside>
       </div>
     </div>
   );

@@ -510,6 +510,75 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-size: 0.7rem;
 }
 
+/* Right column: recent posts, same quiet tone as the TOC */
+.post-timeline-sidebar {
+  grid-column: 3;
+  min-width: 0;
+  position: sticky;
+  top: 2.5rem;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+  padding-left: var(--toc-gap);
+}
+
+.post-timeline {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  user-select: none;
+}
+
+.timeline-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0;
+  margin: 0;
+}
+
+.timeline-item a {
+  display: block;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.timeline-item a:hover {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.timeline-date {
+  display: block;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.timeline-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.timeline-item.is-current a {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+.timeline-more {
+  display: inline-block;
+  margin-top: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.timeline-more:hover {
+  color: var(--text-strong);
+  text-decoration: none;
+}
+
 /* Center Main Article */
 .post-main-article {
   grid-column: 2;
@@ -698,6 +767,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 @media (max-width: 1169px) {
+  .post-timeline-sidebar {
+    display: none;
+  }
+
   .post-layout-container {
     display: flex;
     flex-direction: column;
