@@ -155,6 +155,9 @@ export default function WeaponDamageGraph({ graphData }) {
     ? { top: 14, right: 18, bottom: 28, left: 32 }
     : { top: 15, right: 20, bottom: 30, left: 35 };
   const axisFontSize = compact ? 11.5 : 10;
+  // On narrow screens the hover readout can wrap to two lines (3+ curves, shotgun "NxM (펠릿)").
+  // Reserve that height up front so hovering never makes the graph jump.
+  const readoutMinHeight = compact && (curves.length > 2 || series.some((s) => s.isShotgun)) ? '3.7em' : '1.8em';
   const anchorRadius = compact ? 3 : 2.5;
 
   const graphW = svgWidth - margin.left - margin.right;
@@ -227,33 +230,40 @@ export default function WeaponDamageGraph({ graphData }) {
       {/* Sleek Top Header Bar */}
       <div style={{
         display: 'flex',
-        alignItems: 'baseline',
+        flexDirection: compact ? 'column' : 'row',
+        alignItems: compact ? 'stretch' : 'baseline',
         justifyContent: 'space-between',
+        gap: compact ? '0.3rem' : '0.75rem',
         fontSize: '0.78rem',
         marginBottom: '0.65rem',
         paddingBottom: '0.45rem',
         borderBottom: '1px solid var(--border-subtle)'
       }}>
-        {/* Left: Weapon title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-          <span>{series.map(s => s.name).join(' vs ')}</span>
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>Damage Profile</span>
+        {/* Left: Weapon title (never wraps mid-name; long "A vs B" titles truncate) */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', fontWeight: 600, color: 'var(--text-primary)', minWidth: 0 }}>
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {series.map(s => s.name).join(' vs ')}
+          </span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Damage Profile
+          </span>
         </div>
 
-        {/* Right: Dynamic Readout on hover OR Static Legend */}
+        {/* Right / second row: Dynamic Readout on hover OR Static Legend.
+            Items never break internally; the row wraps between items only. */}
         {hoverData ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.74rem' }}>
-            <span style={{ color: 'var(--text-muted)' }}>{hoverData.range} studs:</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.1rem 0.85rem', fontSize: '0.74rem', minHeight: readoutMinHeight }}>
+            <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{hoverData.range} studs:</span>
             {hoverData.damages.map((d, i) => (
-              <span key={i} style={{ color: d.color }}>
+              <span key={i} style={{ color: d.color, whiteSpace: 'nowrap' }}>
                 {d.part} <strong style={{ color: 'var(--text-primary)' }}>{d.dmg}</strong> ({d.hitsLabel})
               </span>
             ))}
           </div>
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.1rem 0.85rem', fontSize: '0.72rem', color: 'var(--text-muted)', minHeight: readoutMinHeight }}>
             {curves.slice(0, 3).map((c, i) => (
-              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
                 <span style={{
                   display: 'inline-block',
                   width: c.dash ? '10px' : '12px',
