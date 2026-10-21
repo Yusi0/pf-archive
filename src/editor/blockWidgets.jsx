@@ -4,7 +4,7 @@ import { StateField } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 
-// Live Preview, block layer. Tables, graphs, media and code fences (lists and folds stay source) are drawn by the
+// Live Preview, block layer. Tables, graphs, callouts, media and code fences (lists and folds stay source) are drawn by the
 // site's own <MarkdownRenderer> so they look exactly like the published page. A block turns
 // back into source as soon as the selection touches it.
 
@@ -42,6 +42,12 @@ export function findBlocks(doc) {
         n = end + 1;
         continue;
       }
+    } else if (/^>\s*\[![A-Za-z]+\]/.test(trimmed)) {
+      let end = n;
+      while (end + 1 <= total && doc.line(end + 1).text.trim().startsWith('>')) end++;
+      push('callout', n, end);
+      n = end + 1;
+      continue;
     } else if (trimmed.startsWith('|')) {
       let end = n;
       while (end + 1 <= total && doc.line(end + 1).text.trim().startsWith('|')) end++;
@@ -68,7 +74,7 @@ export function blocksFor(doc) {
   return blocks;
 }
 
-const ESTIMATE = { table: 34, graph: 330, media: 320, code: 28 };
+const ESTIMATE = { callout: 90, table: 34, graph: 330, media: 320, code: 28 };
 
 class BlockWidget extends WidgetType {
   constructor(block) {

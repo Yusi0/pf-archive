@@ -1100,6 +1100,41 @@ code,
   line-height: 1.7;
 }
 
+/* Callouts: `> [!info] Title` */
+.callout {
+  --callout-color: var(--text-muted);
+  --callout-bg: rgba(161, 161, 170, 0.08);
+  margin: 1.4rem 0;
+  padding: 0.8rem 1rem 0.85rem;
+  border-left: 3px solid var(--callout-color);
+  border-radius: 0 4px 4px 0;
+  background-color: var(--callout-bg);
+  font-size: 0.94em;
+}
+
+.callout-info { --callout-color: #22d3ee; --callout-bg: rgba(34, 211, 238, 0.08); }
+.callout-warning { --callout-color: #f59e0b; --callout-bg: rgba(245, 158, 11, 0.09); }
+.callout-danger { --callout-color: #f87171; --callout-bg: rgba(248, 113, 113, 0.09); }
+[data-theme='light'] .callout { --callout-bg: rgba(100, 116, 139, 0.10); }
+[data-theme='light'] .callout-info { --callout-color: #0891b2; --callout-bg: rgba(8, 145, 178, 0.09); }
+[data-theme='light'] .callout-warning { --callout-color: #b45309; --callout-bg: rgba(217, 119, 6, 0.10); }
+[data-theme='light'] .callout-danger { --callout-color: #dc2626; --callout-bg: rgba(220, 38, 38, 0.08); }
+
+.callout-title {
+  margin-bottom: 0.35rem;
+  font-weight: 700;
+  color: var(--callout-color);
+}
+
+.callout-body > :last-child,
+.callout-body > :last-child > :last-child {
+  margin-bottom: 0;
+}
+
+.callout-body p {
+  margin-bottom: 0.6rem;
+}
+
 .markdown-body blockquote {
   padding-left: 1rem;
   margin: 1.6rem 0;

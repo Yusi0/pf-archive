@@ -477,6 +477,13 @@ export function generateHeadingSlug(text, slugCounts = null) {
 /**
  * Reusable Block Parser
  */
+const CALLOUT_KINDS = {
+  info: { label: 'Info' },
+  note: { label: 'Note' },
+  warning: { label: 'Warning' },
+  danger: { label: 'Danger' },
+};
+
 export function parseBlocks(markdownText) {
   if (!markdownText || typeof markdownText !== 'string') return '';
 
@@ -653,16 +660,33 @@ export function parseBlocks(markdownText) {
     if (/^>\s?(.*)$/.test(trimmed)) {
       flushPara();
       const quoteLines = [];
+      const rawQuoteLines = [];
       while (i < lines.length) {
         const curTrim = lines[i].trim();
         const quoteMatch = curTrim.match(/^>\s?(.*)$/);
         if (quoteMatch) {
           quoteLines.push(parseInline(quoteMatch[1]));
+          rawQuoteLines.push(quoteMatch[1]);
           i++;
         } else {
           break;
         }
       }
+      // Callout (Obsidian compatible): `> [!info] Title` followed by `>` body lines
+      const calloutMatch = rawQuoteLines[0].match(/^\[!([A-Za-z]+)\][ 	]*(.*)$/);
+      if (calloutMatch) {
+        const kind = calloutMatch[1].toLowerCase();
+        const known = CALLOUT_KINDS[kind] || CALLOUT_KINDS.note;
+        const title = calloutMatch[2].trim() || known.label;
+        const bodyHtml = parseBlocks(rawQuoteLines.slice(1).join('\n').trim());
+        output.push(
+          `<div class="callout callout-${CALLOUT_KINDS[kind] ? kind : 'note'}"><div class="callout-title">${parseInline(title)}</div>` +
+          (bodyHtml ? `<div class="callout-body">${bodyHtml}</div>` : '') +
+          '</div>'
+        );
+        continue;
+      }
+
       output.push(`<blockquote><p>${quoteLines.join('<br>')}</p></blockquote>`);
       continue;
     }
