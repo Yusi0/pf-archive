@@ -43,6 +43,12 @@ export function parseInline(text) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
+  // Typographic arrow: `->` becomes `→` in plain text only (not inside inline code, link targets or bare URLs)
+  html = html
+    .split(/(`[^`]*`|\]\([^)]*\)|https?:\/\/\S+)/)
+    .map((part, i) => (i % 2 === 0 ? part.replace(/-&gt;/g, '→') : part))
+    .join('');
+
   let prev;
   do {
     prev = html;

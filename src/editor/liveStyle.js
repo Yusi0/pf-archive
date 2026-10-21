@@ -77,6 +77,19 @@ class Rule extends WidgetType {
   }
 }
 
+class Arrow extends WidgetType {
+  eq() {
+    return true;
+  }
+  toDOM() {
+    const el = document.createElement('span');
+    el.textContent = '→';
+    return el;
+  }
+}
+
+const arrow = Decoration.replace({ widget: new Arrow() });
+
 const bullet = Decoration.replace({ widget: new BulletDot() });
 const rule = Decoration.replace({ widget: new Rule() });
 
@@ -159,7 +172,17 @@ function build(view) {
         for (let i = 0; i < text.length; i++) if (text[i] === '|') out.push(dim.range(at(i), at(i + 1)));
       }
 
-      for (const span of scanInline(text)) {
+      const spans = scanInline(text);
+
+      // `->` shows as an arrow, like the published page (not inside code spans, link targets or URLs)
+      if (!raw && text.includes('->')) {
+        const protectedRanges = [...text.matchAll(/`[^`]*`|\]\([^)]*\)|https?:\/\/\S+/g)].map((m) => [m.index, m.index + m[0].length]);
+        for (const m of text.matchAll(/->/g)) {
+          if (!protectedRanges.some(([a, b]) => m.index >= a && m.index < b)) out.push(arrow.range(at(m.index), at(m.index + 2)));
+        }
+      }
+
+      for (const span of spans) {
         if (raw) {
           out.push(dim.range(at(span.open[0]), at(span.open[1])));
           if (span.close) out.push(dim.range(at(span.close[0]), at(span.close[1])));
