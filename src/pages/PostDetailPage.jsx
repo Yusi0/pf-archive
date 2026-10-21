@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchContentPosts } from '../utils/contentApi';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
+import ReadingSizeControl from '../components/ReadingSizeControl';
 
 export default function PostDetailPage() {
   const { slug } = useParams();
@@ -81,11 +82,14 @@ export default function PostDetailPage() {
               ← Back
             </button>
 
-            {import.meta.env.DEV && (
-              <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
-                [Edit / 수정]
-              </Link>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              {import.meta.env.DEV && (
+                <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
+                  [Edit / 수정]
+                </Link>
+              )}
+              <ReadingSizeControl />
+            </div>
           </div>
 
           {/* Article Header */}

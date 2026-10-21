@@ -8,12 +8,15 @@
   <title>PF Archive</title>
   <meta name="description" content="Phantom Forces PF Revamp, 밸런스 패치, 총기/맵 리워크 분석 및 패치노트 아카이빙 블로그" />
 
-  <!-- Apply saved theme before first paint (avoids dark -> light flash) -->
+  <!-- Apply saved theme and reading size before first paint (avoids flash / layout shift) -->
   <script>
+    var root = document.documentElement;
     try {
-      document.documentElement.setAttribute('data-theme', localStorage.getItem('pf_theme') || 'dark');
+      root.setAttribute('data-theme', localStorage.getItem('pf_theme') || 'dark');
+      var scale = parseFloat(localStorage.getItem('pf_reading_scale'));
+      if ([0.9, 1, 1.12, 1.25, 1.4].indexOf(scale) >= 0) root.style.setProperty('--reading-scale', String(scale));
     } catch (e) {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      root.setAttribute('data-theme', 'dark');
     }
   </script>
 
