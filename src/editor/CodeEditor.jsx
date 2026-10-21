@@ -6,8 +6,9 @@ import { indentUnit } from '@codemirror/language';
 import { editorTheme } from './theme';
 import { sourceStyle } from './sourceStyle';
 import { liveStyle } from './liveStyle';
+import { blockWidgets } from './blockWidgets';
 
-const modeExtension = (mode) => (mode === 'live' ? liveStyle : sourceStyle);
+const modeExtension = (mode) => (mode === 'live' ? [liveStyle, blockWidgets] : sourceStyle);
 
 const External = Annotation.define();
 

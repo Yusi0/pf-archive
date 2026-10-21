@@ -273,6 +273,16 @@
   vertical-align: super;
 }
 
+/* Live Preview block widgets: rendered by the site's own renderer */
+.editor-cm .cm-block {
+  padding: 0.35rem 0;
+  cursor: text;
+}
+
+.editor-cm .cm-block .markdown-body > :first-child {
+  margin-top: 0 !important;
+}
+
 /* Mode switch */
 .editor-modes {
   display: inline-flex;
