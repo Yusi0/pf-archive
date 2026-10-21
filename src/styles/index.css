@@ -1046,9 +1046,9 @@ code,
 
 /* Info / Note [i] */
 .pf-chip-info {
-  background-color: rgba(113, 113, 122, 0.10);
-  color: #888888;
-  border: 1px solid rgba(113, 113, 122, 0.22);
+  background-color: rgba(34, 211, 238, 0.12);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.30);
   font-size: 0.75rem;
 }
 
@@ -1077,9 +1077,9 @@ code,
 }
 
 [data-theme='light'] .pf-chip-info {
-  background-color: rgba(100, 116, 139, 0.10);
-  color: #64748b;
-  border-color: rgba(100, 116, 139, 0.25);
+  background-color: rgba(8, 145, 178, 0.12);
+  color: #0891b2;
+  border-color: rgba(8, 145, 178, 0.30);
 }
 
 /* Collapsed children wrap */
