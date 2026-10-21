@@ -914,8 +914,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     margin-top: 0.25rem;
   }
 
+  /* Keep the reading column at its normal width, centered, instead of stretching it */
   .post-main-article {
-    max-width: 100%;
+    width: 100%;
+    margin: 0 auto;
   }
 }
 
