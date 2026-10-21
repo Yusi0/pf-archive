@@ -712,11 +712,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* Back to top (bottom-right, fades/slides in after scrolling) */
-.back-to-top {
+.scroll-fab-stack {
   position: fixed;
   right: max(1.25rem, env(safe-area-inset-right));
   bottom: max(1.25rem, env(safe-area-inset-bottom));
   z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.back-to-top {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -746,6 +753,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .back-to-top:active svg {
   transform: translateY(-2px);
+}
+
+.back-to-top:last-child:active svg {
+  transform: translateY(2px);
 }
 
 .back-to-top svg {
