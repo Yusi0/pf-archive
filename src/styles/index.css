@@ -426,6 +426,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding-right: var(--toc-gap);
 }
 
+/* Side columns scroll with wheel/touch/keyboard but show no scrollbar (quiet, symmetric margins) */
+.post-toc-sidebar,
+.post-timeline-sidebar {
+  scrollbar-width: none;
+}
+
+.post-toc-sidebar::-webkit-scrollbar,
+.post-timeline-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
 .sidebar-toc {
   font-size: 0.8rem;
   line-height: 1.5;
