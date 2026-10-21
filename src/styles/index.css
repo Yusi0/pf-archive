@@ -160,7 +160,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Post pages: TOC column + gap + reading column (+ side padding) */
 .app-shell[data-layout='wide'] {
-  --shell-width: calc(var(--toc-width) + var(--toc-gap) + var(--max-width) + 3rem);
+  --shell-width: calc(var(--max-width) + 2 * (var(--toc-width) + var(--toc-gap)) + 3rem);
 }
 
 .app-main {
@@ -399,21 +399,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   max-width: var(--shell-width);
   margin: 0 auto;
   padding: 2.2rem 1.5rem 5rem 1.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: var(--toc-gap);
+  /* Symmetric 3 columns: the reading column is always the exact center; the side
+     columns share the leftover width (up to --toc-width + --toc-gap each). */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--max-width) minmax(0, 1fr);
+  align-items: start;
+}
+
+/* Between 1170px and 1300px the side columns shrink (230px -> ~180px) */
+@media (max-width: 1300px) {
+  .post-page-wrapper,
+  .app-shell[data-layout='wide'] {
+    --toc-gap: 2.5rem;
+  }
 }
 
 /* Left Sidebar Table of Contents: Quiet, Simple, Modern, Borderless */
 .post-toc-sidebar {
-  width: var(--toc-width);
-  flex-shrink: 0;
+  grid-column: 1;
+  justify-self: stretch;
+  min-width: 0;
   position: sticky;
   top: 2.5rem;
   max-height: calc(100vh - 5rem);
   overflow-y: auto;
-  padding-right: 0.6rem;
+  padding-right: var(--toc-gap);
 }
 
 .sidebar-toc {
@@ -502,7 +512,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* Center Main Article */
 .post-main-article {
-  flex: 1;
+  grid-column: 2;
   max-width: var(--max-width);
   min-width: 0;
 }
@@ -687,8 +697,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   display: none;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1169px) {
   .post-layout-container {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 1.25rem;
