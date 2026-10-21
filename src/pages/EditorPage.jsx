@@ -10,6 +10,7 @@ import { ArrowLeftIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../compo
 import '../styles/editor.css';
 
 const MODES = [
+  ['live', 'Live', '서식을 바로 보면서 편집'],
   ['source', 'Source', '원문 편집'],
   ['split', 'Split', '편집 + 실제 페이지 미리보기'],
 ];
@@ -154,9 +155,9 @@ New procedural recoil and movement inertia system is currently under testing.
   const [mode, setMode] = useState(() => {
     try {
       const saved = localStorage.getItem('pf_editor_mode');
-      return ['source', 'split'].includes(saved) ? saved : 'source';
+      return ['live', 'source', 'split'].includes(saved) ? saved : 'live';
     } catch {
-      return 'source';
+      return 'live';
     }
   });
   const changeMode = (next) => {

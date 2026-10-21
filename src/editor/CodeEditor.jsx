@@ -5,6 +5,9 @@ import { defaultKeymap, history, historyKeymap, indentLess, insertTab } from '@c
 import { indentUnit } from '@codemirror/language';
 import { editorTheme } from './theme';
 import { sourceStyle } from './sourceStyle';
+import { liveStyle } from './liveStyle';
+
+const modeExtension = (mode) => (mode === 'live' ? liveStyle : sourceStyle);
 
 const External = Annotation.define();
 
@@ -81,7 +84,7 @@ const CodeEditor = forwardRef(function CodeEditor(
         EditorView.contentAttributes.of({ spellcheck: 'false', autocorrect: 'off', autocapitalize: 'off' }),
         placeholder ? placeholderExt(placeholder) : [],
         editorTheme,
-        modeCompartment.current.of(sourceStyle),
+        modeCompartment.current.of(modeExtension(mode)),
         EditorView.domEventHandlers({
           paste(event) {
             const items = event.clipboardData?.items;
@@ -135,8 +138,7 @@ const CodeEditor = forwardRef(function CodeEditor(
   }, [externalDoc]);
 
   useEffect(() => {
-    // Live decorations arrive in a later step; every mode currently shows the source.
-    viewRef.current?.dispatch({ effects: modeCompartment.current.reconfigure(sourceStyle) });
+    viewRef.current?.dispatch({ effects: modeCompartment.current.reconfigure(modeExtension(mode)) });
   }, [mode]);
 
   return <div className="editor-cm" ref={hostRef} />;
