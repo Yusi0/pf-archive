@@ -90,7 +90,9 @@ function build(view) {
 
       const text = line.text;
       const prefix = scanLinePrefix(text);
-      const raw = active.has(line.number);
+      // Lists (bullets, [+]/[-]/[=]/[A]/[i] tags) stay as source in Live mode: only the dimmed Source styling applies.
+      const isListLine = prefix?.kind === 'list' || /^\s*\[[+\-=aAiI]\](?!\()/.test(text);
+      const raw = active.has(line.number) || isListLine;
       const at = (n) => line.from + n;
       const hideOrDim = (a, b) => {
         if (b > a) out.push((raw ? dim : hide).range(at(a), at(b)));
