@@ -183,6 +183,9 @@ function parseCustomTables(blockText) {
 
     if (line.trim().startsWith('|') && line.trim().endsWith('|')) {
       const tableRows = [];
+      let headerRowCount = 0; // 1 only when a separator row directly follows the first line
+      let separatorAligns = null;
+      let rowIndex = 0;
 
       while (i < lines.length && lines[i].trim().startsWith('|') && lines[i].trim().endsWith('|')) {
         const curLine = lines[i].trim();
@@ -193,15 +196,27 @@ function parseCustomTables(blockText) {
 
         if (!isSeparator) {
           tableRows.push(cells);
+        } else if (rowIndex === 1 && tableRows.length === 1) {
+          headerRowCount = 1;
+          separatorAligns = cells.map((c) => {
+            const t = c.trim();
+            if (t.startsWith(':') && t.endsWith(':')) return 'center';
+            if (t.endsWith(':')) return 'right';
+            if (t.startsWith(':')) return 'left';
+            return null;
+          });
         }
+        rowIndex++;
         i++;
       }
 
       if (tableRows.length > 0) {
-        let tableHtml = '<div class="markdown-table-wrapper"><table class="custom-table"><tbody>';
-        for (const rowCells of tableRows) {
+        let tableHtml = '<div class="markdown-table-wrapper"><table class="custom-table">' + (headerRowCount ? '<thead>' : '<tbody>');
+        tableRows.forEach((rowCells, rowNo) => {
+          const isHeader = headerRowCount && rowNo === 0;
+          if (headerRowCount && rowNo === 1) tableHtml += '</thead><tbody>';
           tableHtml += '<tr>';
-          for (const rawCell of rowCells) {
+          rowCells.forEach((rawCell, colNo) => {
             const hasLeading = /^\s+/.test(rawCell);
             const hasTrailing = /\s+$/.test(rawCell);
 
@@ -209,6 +224,7 @@ function parseCustomTables(blockText) {
             if (!hasLeading && hasTrailing) align = 'left';
             else if (hasLeading && !hasTrailing) align = 'right';
             else if (hasLeading && hasTrailing) align = 'center';
+            if (separatorAligns && separatorAligns[colNo]) align = separatorAligns[colNo];
 
             let cellContent = rawCell.trim();
             let cellBgStyle = '';
@@ -227,10 +243,11 @@ function parseCustomTables(blockText) {
             }
 
             const parsedCellText = parseInline(cellContent);
-            tableHtml += `<td style="text-align: ${align}; ${cellBgStyle}">${parsedCellText}</td>`;
-          }
+            const tag = isHeader ? 'th' : 'td';
+            tableHtml += `<${tag} style="text-align: ${align}; ${cellBgStyle}">${parsedCellText}</${tag}>`;
+          });
           tableHtml += '</tr>';
-        }
+        });
         tableHtml += '</tbody></table></div>';
         resultLines.push(tableHtml);
         continue;

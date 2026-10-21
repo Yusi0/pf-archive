@@ -765,7 +765,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     transition: opacity 0.2s ease, transform 0.2s ease, clip-path 0.2s ease, visibility 0s linear 0.2s;
   }
 
-  .custom-table td {
+  .custom-table td,
+  .custom-table th {
     padding: 0.5rem 0.6rem;
   }
 
@@ -1197,6 +1198,18 @@ code,
 .custom-table td {
   border: 1px solid var(--border-subtle);
   padding: 0.55rem 0.85rem;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Header row (only when the table has a |---| separator under its first line) */
+.custom-table th {
+  border: 1px solid var(--border-subtle);
+  border-bottom: 2px solid var(--border-strong);
+  padding: 0.55rem 0.85rem;
+  font-weight: 700;
+  color: var(--text-strong);
+  background-color: var(--bg-secondary);
   word-break: keep-all;
   overflow-wrap: break-word;
 }
