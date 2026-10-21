@@ -34,22 +34,41 @@ export default function WeaponDamageGraph({ graphData }) {
   const maxX = Math.max(150, Math.ceil((maxInputRange + 30) / 25) * 25);
   const minX = 0;
 
-  // 2. Piecewise linear calculation for damage at exact range
+  // 2. Piecewise linear calculation for damage at exact range (returns both total & pellet dmg)
   const calcDamageAt = (points, mult, r) => {
-    if (!points || points.length === 0) return 0;
-    if (r <= points[0].range) return points[0].damage * mult;
+    if (!points || points.length === 0) return { total: 0, pellet: 0 };
+    const getPointPellet = (p) => (p.pelletDmg !== undefined ? p.pelletDmg : p.damage);
+
+    if (r <= points[0].range) {
+      return {
+        total: points[0].damage * mult,
+        pellet: getPointPellet(points[0]) * mult
+      };
+    }
     const last = points[points.length - 1];
-    if (r >= last.range) return last.damage * mult;
+    if (r >= last.range) {
+      return {
+        total: last.damage * mult,
+        pellet: getPointPellet(last) * mult
+      };
+    }
 
     for (let i = 0; i < points.length - 1; i++) {
       const p1 = points[i];
       const p2 = points[i + 1];
       if (r >= p1.range && r <= p2.range) {
         const ratio = (r - p1.range) / (p2.range - p1.range);
-        return (p1.damage + ratio * (p2.damage - p1.damage)) * mult;
+        const total = (p1.damage + ratio * (p2.damage - p1.damage)) * mult;
+        const p1P = getPointPellet(p1);
+        const p2P = getPointPellet(p2);
+        const pellet = (p1P + ratio * (p2P - p1P)) * mult;
+        return { total, pellet };
       }
     }
-    return last.damage * mult;
+    return {
+      total: last.damage * mult,
+      pellet: getPointPellet(last) * mult
+    };
   };
 
   // 3. Build curve paths
@@ -137,13 +156,29 @@ export default function WeaponDamageGraph({ graphData }) {
       const r = Math.round(svgToX(mouseSvgX));
       const damages = curves.map(c => {
         const s = series.find(ser => ser.name === c.seriesName) || series[0];
-        const dmg = calcDamageAt(s.points, c.mult, r);
-        const hits = Math.ceil(100 / dmg);
+        const dmgObj = calcDamageAt(s.points, c.mult, r);
+
+        let dmgText;
+        let hitsLabel;
+
+        if (s.isShotgun && s.pelletCount > 1) {
+          const pelletsToKill = Math.ceil(100 / dmgObj.pellet);
+          const formattedPellet = Number.isInteger(dmgObj.pellet)
+            ? dmgObj.pellet
+            : dmgObj.pellet.toFixed(1);
+          dmgText = `${formattedPellet}x${s.pelletCount}`;
+          hitsLabel = `${pelletsToKill}펠릿`;
+        } else {
+          const hits = Math.ceil(100 / dmgObj.total);
+          dmgText = dmgObj.total.toFixed(1);
+          hitsLabel = `${hits}방`;
+        }
+
         return {
           name: c.seriesName,
           part: c.partName.split(' ')[0],
-          dmg: dmg.toFixed(1),
-          hits,
+          dmg: dmgText,
+          hitsLabel,
           color: c.color
         };
       });
@@ -185,7 +220,7 @@ export default function WeaponDamageGraph({ graphData }) {
             <span style={{ color: 'var(--text-muted)' }}>{hoverData.range} studs:</span>
             {hoverData.damages.map((d, i) => (
               <span key={i} style={{ color: d.color }}>
-                {d.part} <strong style={{ color: 'var(--text-primary)' }}>{d.dmg}</strong> ({d.hits}방)
+                {d.part} <strong style={{ color: 'var(--text-primary)' }}>{d.dmg}</strong> ({d.hitsLabel})
               </span>
             ))}
           </div>
@@ -277,6 +312,30 @@ export default function WeaponDamageGraph({ graphData }) {
             strokeWidth="1"
           />
 
+          {/* Subtle 100 HP Threshold line if in range */}
+          {maxY >= 100 && (
+            <g key="hp-100-threshold">
+              <line
+                x1={margin.left}
+                y1={yToSvg(100)}
+                x2={svgWidth - margin.right}
+                y2={yToSvg(100)}
+                stroke="rgba(239, 68, 68, 0.22)"
+                strokeDasharray="3,3"
+                strokeWidth="1"
+              />
+              <text
+                x={svgWidth - margin.right}
+                y={yToSvg(100) - 3}
+                fill="rgba(239, 68, 68, 0.5)"
+                fontSize="8.5"
+                textAnchor="end"
+              >
+                100 HP
+              </text>
+            </g>
+          )}
+
           {/* Curve Lines */}
           {curves.map((curve, idx) => {
             let pathD = '';
@@ -332,7 +391,7 @@ export default function WeaponDamageGraph({ graphData }) {
                   <circle
                     key={`hover-dot-${idx}`}
                     cx={xToSvg(hoverData.range)}
-                    cy={yToSvg(dmgAt)}
+                    cy={yToSvg(dmgAt.total)}
                     r="3.5"
                     fill={curve.color}
                     stroke="var(--bg-primary)"

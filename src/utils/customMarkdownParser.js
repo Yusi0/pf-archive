@@ -271,21 +271,48 @@ export function parseGraphBlock(blockText) {
       continue;
     }
 
-    // Damage point line: 40 @ 50
+    // Damage point line: 40 @ 50 or 8x9 @ 50 (Shotgun DxP)
     if (rawLine.includes('@')) {
       if (!currentSeries) {
         parseError = `줄 ${i + 1}: 시리즈 이름(@시리즈명)이 선언되기 전에 데이터가 입력되었습니다.`;
         break;
       }
       const parts = rawLine.split('@');
-      const dmg = parseFloat(parts[0].trim());
+      const dmgStr = parts[0].trim();
       const range = parseFloat(parts[1].trim());
+
+      let dmg = 0;
+      let pelletDmg = null;
+      let pelletCount = null;
+
+      // Check for Shotgun DxP format e.g. 8x9 or 8X9 or 17.5x8
+      const shotgunMatch = dmgStr.match(/^([\d.]+)\s*[xX]\s*(\d+)$/);
+      if (shotgunMatch) {
+        pelletDmg = parseFloat(shotgunMatch[1]);
+        pelletCount = parseInt(shotgunMatch[2], 10);
+        dmg = pelletDmg * pelletCount; // Total potential damage for curve plotting
+
+        currentSeries.isShotgun = true;
+        currentSeries.pelletCount = pelletCount;
+      } else {
+        dmg = parseFloat(dmgStr);
+        if (currentSeries.isShotgun && currentSeries.pelletCount > 1) {
+          pelletDmg = dmg;
+          dmg = pelletDmg * currentSeries.pelletCount;
+          pelletCount = currentSeries.pelletCount;
+        }
+      }
 
       if (isNaN(dmg) || isNaN(range)) {
         parseError = `줄 ${i + 1}: 잘못된 데미지/사거리 수치입니다 ("${rawLine}")`;
         break;
       }
-      currentSeries.points.push({ damage: dmg, range });
+      currentSeries.points.push({
+        damage: dmg,
+        range,
+        pelletDmg: pelletDmg !== null ? pelletDmg : dmg,
+        pelletCount: pelletCount !== null ? pelletCount : 1
+      });
       continue;
     }
 
