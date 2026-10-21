@@ -4,6 +4,28 @@ import fs from 'fs'
 import path from 'path'
 import { spawn, spawnSync } from 'child_process'
 
+// Locate ffmpeg: $FFMPEG_PATH, then PATH, then a WinGet install (so a freshly installed ffmpeg works
+// even when this process started before PATH was refreshed). Returns null when none is runnable.
+function findFfmpeg() {
+  const works = (cmd) => {
+    const r = spawnSync(cmd, ['-version'])
+    return !r.error && r.status === 0
+  }
+  const candidates = []
+  if (process.env.FFMPEG_PATH) candidates.push(process.env.FFMPEG_PATH)
+  candidates.push('ffmpeg')
+  const wingetRoot = process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'Microsoft', 'WinGet', 'Packages')
+  if (wingetRoot && fs.existsSync(wingetRoot)) {
+    for (const pkg of fs.readdirSync(wingetRoot).filter(d => d.startsWith('Gyan.FFmpeg'))) {
+      const pkgDir = path.join(wingetRoot, pkg)
+      for (const sub of fs.readdirSync(pkgDir)) {
+        candidates.push(path.join(pkgDir, sub, 'bin', 'ffmpeg.exe'))
+      }
+    }
+  }
+  return candidates.find(works) || null
+}
+
 // Vite Custom Dev Server API Plugin for content/ Markdown File Management
 function pfArchiveApiPlugin() {
   const contentDir = path.resolve(__dirname, 'content')
@@ -150,9 +172,9 @@ function pfArchiveApiPlugin() {
           res.end(JSON.stringify({ error }))
         }
 
-        const probe = spawnSync('ffmpeg', ['-version'])
-        if (probe.error || probe.status !== 0) {
-          return fail(503, 'ffmpeg를 찾을 수 없어 영상을 압축할 수 없습니다. ffmpeg를 설치하고 PATH에 추가한 뒤 개발 서버를 다시 시작하거나, 유튜브 [[링크]]를 사용하세요.')
+        const ffmpegPath = findFfmpeg()
+        if (!ffmpegPath) {
+          return fail(503, 'ffmpeg를 찾을 수 없어 영상을 압축할 수 없습니다. ffmpeg를 설치하고 PATH(또는 FFMPEG_PATH 환경변수)에 추가한 뒤 개발 서버를 다시 시작하거나, 유튜브 [[링크]]를 사용하세요.')
         }
 
         const chunks = []
@@ -176,7 +198,7 @@ function pfArchiveApiPlugin() {
             '-movflags', '+faststart',
             outPath,
           ]
-          const ff = spawn('ffmpeg', args)
+          const ff = spawn(ffmpegPath, args)
           let stderr = ''
           ff.stderr.on('data', d => { stderr += d })
           ff.on('error', err => {
