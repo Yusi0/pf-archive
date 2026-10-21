@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { Annotation, Compartment, EditorState } from '@codemirror/state';
+import { Annotation, Compartment, EditorState, Transaction } from '@codemirror/state';
 import { EditorView, keymap, placeholder as placeholderExt } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap, indentLess, insertTab } from '@codemirror/commands';
+import { defaultKeymap, history, historyKeymap, indentLess, insertTab, redo } from '@codemirror/commands';
 import { indentUnit } from '@codemirror/language';
 import { editorTheme } from './theme';
 import { sourceStyle } from './sourceStyle';
@@ -70,6 +70,7 @@ const CodeEditor = forwardRef(function CodeEditor(
       { key: 'Mod-b', preventDefault: true, run: (v) => wrapSelection(v, '**', '**', '텍스트') },
       { key: 'Mod-i', preventDefault: true, run: (v) => wrapSelection(v, '*', '*', '텍스트') },
       { key: 'Mod-k', preventDefault: true, run: (v) => wrapSelection(v, '[', '](https://)', '링크 텍스트') },
+      { key: 'Mod-Shift-z', preventDefault: true, run: redo }, // historyKeymap only binds this on Linux/macOS
       // Tab: a literal tab at a bare caret, indent for a selection; Shift+Tab outdents.
       { key: 'Tab', run: insertTab, shift: indentLess },
     ];
@@ -131,7 +132,8 @@ const CodeEditor = forwardRef(function CodeEditor(
     if (externalDoc.text !== current) {
       view.dispatch({
         changes: { from: 0, to: current.length, insert: externalDoc.text },
-        annotations: [External.of(true)],
+        // Loading a post is not an edit: keep it out of the undo history so Ctrl+Z can never revert to the empty doc.
+        annotations: [External.of(true), Transaction.addToHistory.of(false)],
         selection: { anchor: 0 },
       });
     }
