@@ -294,6 +294,11 @@
   color: var(--text-muted);
 }
 
+.editor-cm .cm-subtext {
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
 .editor-cm .cm-bullet {
   color: var(--text-muted);
 }

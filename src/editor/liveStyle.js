@@ -145,6 +145,9 @@ function build(view) {
       if (prefix?.kind === 'heading') {
         out.push(lineClass(`cm-h cm-h${prefix.level}`).range(line.from));
         hideOrDim(...prefix.marker);
+      } else if (prefix?.kind === 'subtext') {
+        out.push(lineClass('cm-subtext').range(line.from));
+        hideOrDim(...prefix.marker);
       } else if (prefix?.kind === 'quote') {
         out.push(lineClass('cm-quote').range(line.from));
         hideOrDim(...prefix.marker);

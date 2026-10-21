@@ -510,6 +510,8 @@ export function parseBlocks(markdownText) {
   // Helper: check if a line is a list item (ordered, unordered, or tag bullet)
   const checkListItem = (line) => {
     if (!line || !line.trim()) return null;
+    // `-# text` is a subtext line, not a list item
+    if (/^-#(\s|$)/.test(line)) return null;
     // Exclude markdown links starting with [text](url)
     if (/^\s*\[[^\]]+\]\(/.test(line)) return null;
 
@@ -634,6 +636,15 @@ export function parseBlocks(markdownText) {
       const headingId = generateHeadingSlug(content, headingSlugCounts);
 
       output.push(`<h${level} id="${headingId}">${parsedContent}</h${level}>`);
+      i++;
+      continue;
+    }
+
+    // Subtext: `-# small muted line` (Discord style), one paragraph per line
+    const subtextMatch = rawLine.match(/^-#\s+(.*)$/);
+    if (subtextMatch) {
+      flushPara();
+      output.push(`<p class="md-subtext">${parseInline(subtextMatch[1])}</p>`);
       i++;
       continue;
     }

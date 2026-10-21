@@ -152,6 +152,8 @@ export function scanInline(text) {
 export function scanLinePrefix(text) {
   let m = text.match(/^(#{1,6})(\s+)/);
   if (m) return { kind: 'heading', level: m[1].length, marker: [0, m[0].length] };
+  m = text.match(/^-#(\s+)/);
+  if (m) return { kind: 'subtext', marker: [0, m[0].length] };
   m = text.match(/^(\s*)(>)\s?/);
   if (m) return { kind: 'quote', marker: [m[1].length, m[0].length] };
   m = text.match(/^(\s*)([-*+]|\d+\.)(\s+)/);
