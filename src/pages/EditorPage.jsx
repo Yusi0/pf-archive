@@ -5,6 +5,7 @@ import { stringifyFrontmatter } from '../utils/frontmatter';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import FontSizeControl from '../components/FontSizeControl';
 import CodeEditor from '../editor/CodeEditor';
+import { toWebp } from '../editor/imageConvert';
 import { extractHeadings } from '../components/TableOfContents';
 import { ArrowLeftIcon, CalendarIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
 import '../styles/editor.css';
@@ -150,8 +151,9 @@ New procedural recoil and movement inertia system is currently under testing.
     setIsUploading(true);
 
     try {
-      const { url, filename: uploadedFilename } = await uploadImage(file);
-      editor.replaceFirst(placeholder, `![${uploadedFilename}](${url})\n`);
+      // Shrunk + converted to WebP in the browser first; alt stays empty (the filename is noise)
+      const { url } = await uploadImage(await toWebp(file));
+      editor.replaceFirst(placeholder, `![](${url})\n`);
     } catch (err) {
       alert(`이미지 업로드 실패: ${err.message}`);
       editor.replaceFirst(placeholder, '');
