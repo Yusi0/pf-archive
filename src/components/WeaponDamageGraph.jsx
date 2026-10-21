@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // Minimalist, modern palette for damage curves
 const CURVE_PALETTES = [
@@ -14,9 +14,30 @@ const CURVE_PALETTES = [
   }
 ];
 
+// Below this container width the graph switches to a simplified layout (fewer ticks, larger labels)
+const COMPACT_BELOW_PX = 520;
+
+// Smallest "nice" step that keeps the tick count within `target` intervals
+const niceStep = (max, target, candidates) =>
+  candidates.find((s) => max / s <= target) ?? candidates[candidates.length - 1];
+
 export default function WeaponDamageGraph({ graphData }) {
   const [hoverData, setHoverData] = useState(null); // { range, damages: [{ name, part, dmg, hits, color }] }
+  const [width, setWidth] = useState(660);
   const svgRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  const hasGraph = Boolean(graphData && graphData.valid && graphData.series && graphData.series.length > 0);
+
+  // Draw in real pixels (1 SVG unit = 1 CSS px) so labels keep their size on narrow screens
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!hasGraph || !el) return undefined;
+
+    const observer = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width)));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasGraph]);
 
   if (!graphData || !graphData.valid) return null;
   const { series = [] } = graphData;
@@ -127,9 +148,14 @@ export default function WeaponDamageGraph({ graphData }) {
   const maxY = Math.ceil((maxDmg + 10) / 10) * 10;
 
   // Dimensions
-  const svgWidth = 660;
-  const svgHeight = 220;
-  const margin = { top: 15, right: 20, bottom: 30, left: 35 };
+  const compact = width < COMPACT_BELOW_PX;
+  const svgWidth = Math.max(260, width);
+  const svgHeight = compact ? 200 : 220;
+  const margin = compact
+    ? { top: 14, right: 18, bottom: 28, left: 32 }
+    : { top: 15, right: 20, bottom: 30, left: 35 };
+  const axisFontSize = compact ? 11.5 : 10;
+  const anchorRadius = compact ? 3 : 2.5;
 
   const graphW = svgWidth - margin.left - margin.right;
   const graphH = svgHeight - margin.top - margin.bottom;
@@ -139,11 +165,11 @@ export default function WeaponDamageGraph({ graphData }) {
   const svgToX = (px) => Math.max(0, Math.min(maxX, ((px - margin.left) / graphW) * maxX));
 
   // Ticks
-  const xStep = maxX > 250 ? 50 : 25;
+  const xStep = compact ? niceStep(maxX, 4, [25, 50, 100, 200, 500]) : (maxX > 250 ? 50 : 25);
   const xTicks = [];
   for (let x = 0; x <= maxX; x += xStep) xTicks.push(x);
 
-  const yStep = maxY > 80 ? 25 : 20;
+  const yStep = compact ? niceStep(maxY, 4, [10, 20, 25, 50, 100]) : (maxY > 80 ? 25 : 20);
   const yTicks = [];
   for (let y = yStep; y <= maxY; y += yStep) yTicks.push(y);
 
@@ -243,7 +269,7 @@ export default function WeaponDamageGraph({ graphData }) {
       </div>
 
       {/* SVG Canvas Area */}
-      <div style={{ position: 'relative', width: '100%', overflowX: 'auto' }}>
+      <div ref={wrapRef} style={{ position: 'relative', width: '100%', overflowX: 'auto' }}>
         <svg
           ref={svgRef}
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
@@ -261,14 +287,14 @@ export default function WeaponDamageGraph({ graphData }) {
                   y1={yPos}
                   x2={svgWidth - margin.right}
                   y2={yPos}
-                  style={{ stroke: 'var(--text-primary)', strokeOpacity: 0.06 }}
+                  style={{ stroke: 'var(--text-primary)', strokeOpacity: 0.1 }}
                   strokeWidth="1"
                 />
                 <text
                   x={margin.left - 6}
-                  y={yPos + 3}
+                  y={yPos + axisFontSize * 0.35}
                   fill="var(--text-muted)"
-                  fontSize="9.5"
+                  fontSize={axisFontSize}
                   textAnchor="end"
                 >
                   {yVal}
@@ -282,6 +308,17 @@ export default function WeaponDamageGraph({ graphData }) {
             const xPos = xToSvg(xVal);
             return (
               <g key={`xgrid-${xVal}`}>
+                {/* Vertical grid line (skipped at 0: the left edge is the y axis) */}
+                {xVal > 0 && (
+                  <line
+                    x1={xPos}
+                    y1={margin.top}
+                    x2={xPos}
+                    y2={svgHeight - margin.bottom}
+                    style={{ stroke: 'var(--text-primary)', strokeOpacity: 0.1 }}
+                    strokeWidth="1"
+                  />
+                )}
                 <line
                   x1={xPos}
                   y1={svgHeight - margin.bottom}
@@ -291,9 +328,9 @@ export default function WeaponDamageGraph({ graphData }) {
                 />
                 <text
                   x={xPos}
-                  y={svgHeight - margin.bottom + 15}
+                  y={svgHeight - margin.bottom + 6 + axisFontSize}
                   fill="var(--text-muted)"
-                  fontSize="9.5"
+                  fontSize={axisFontSize}
                   textAnchor="middle"
                 >
                   {xVal}st
@@ -327,8 +364,8 @@ export default function WeaponDamageGraph({ graphData }) {
               <text
                 x={svgWidth - margin.right}
                 y={yToSvg(100) - 3}
-                fill="rgba(239, 68, 68, 0.5)"
-                fontSize="8.5"
+                fill="rgba(239, 68, 68, 0.7)"
+                fontSize={compact ? 10 : 8.5}
                 textAnchor="end"
               >
                 100 HP
@@ -363,7 +400,7 @@ export default function WeaponDamageGraph({ graphData }) {
                     key={`pt-${pIdx}`}
                     cx={xToSvg(ap.range)}
                     cy={yToSvg(ap.damage)}
-                    r="2.5"
+                    r={anchorRadius}
                     fill={curve.color}
                   />
                 ))}

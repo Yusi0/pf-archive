@@ -956,6 +956,11 @@ code,
   overflow-wrap: break-word;
 }
 
+/* Label cells (a lone **bold**): never wrap, so the label column keeps its width on narrow screens */
+.custom-table td > strong:only-child {
+  white-space: nowrap;
+}
+
 /* Media & Video */
 .markdown-figure {
   margin: 2rem 0;
