@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .agents
+
+# Generated at build time (vite.config.js buildStart)
+public/api/posts.json

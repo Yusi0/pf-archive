@@ -7,12 +7,10 @@ export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    async function load() {
-      const data = await fetchContentPosts();
-      setPosts(data);
-    }
-    load();
+    fetchContentPosts().then(setPosts).catch(err => setError(err.message));
   }, []);
 
   const filteredPosts = posts.filter(post =>
@@ -43,12 +41,14 @@ export default function HomePage() {
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
             TIMELINE ({filteredPosts.length})
           </span>
-          <Link
-            to="/editor"
-            style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textDecoration: 'underline' }}
-          >
-            [+ Editor / 글쓰기]
-          </Link>
+          {import.meta.env.DEV && (
+            <Link
+              to="/editor"
+              style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textDecoration: 'underline' }}
+            >
+              [+ Editor / 글쓰기]
+            </Link>
+          )}
         </div>
 
         <input
@@ -75,10 +75,15 @@ export default function HomePage() {
         </div>
       ) : (
         <div style={{ padding: '2rem 0', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-          아직 작성된 아카이브 기록이 없습니다.{' '}
-          <Link to="/editor" style={{ textDecoration: 'underline' }}>
-            에디터에서 새 기록을 작성해보세요.
-          </Link>
+          {error ? `글 목록을 불러오지 못했습니다. (${error})` : '아직 작성된 아카이브 기록이 없습니다.'}
+          {import.meta.env.DEV && !error && (
+            <>
+              {' '}
+              <Link to="/editor" style={{ textDecoration: 'underline' }}>
+                에디터에서 새 기록을 작성해보세요.
+              </Link>
+            </>
+          )}
         </div>
       )}
     </div>

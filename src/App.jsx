@@ -28,7 +28,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/post/:slug" element={<PostDetailPage />} />
-            <Route path="/editor" element={<EditorPage />} />
+            {import.meta.env.DEV && <Route path="/editor" element={<EditorPage />} />}
           </Routes>
         </main>
         <Footer />

@@ -11,12 +11,19 @@ export default function PostDetailPage() {
   const [post, setPost] = useState(null);
   const [prevPost, setPrevPost] = useState(null);
   const [nextPost, setNextPost] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
 
     async function load() {
-      const loaded = await fetchContentPosts();
+      let loaded;
+      try {
+        loaded = await fetchContentPosts();
+      } catch (err) {
+        setError(err.message);
+        return;
+      }
       let postIndex = loaded.findIndex(p => p.slug === slug || p.id === slug || p.filename === slug);
 
       // Backwards-compatibility fallback for older URL slugs
@@ -46,7 +53,8 @@ export default function PostDetailPage() {
   if (!post) {
     return (
       <div className="container" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
-        <h2>Document not found.</h2>
+        <h2>{error ? '글을 불러오지 못했습니다.' : 'Document not found.'}</h2>
+        {error && <p style={{ color: 'var(--text-muted)' }}>{error}</p>}
         <Link to="/" style={{ color: 'var(--text-secondary)', marginTop: '1rem', display: 'inline-block' }}>
           ← Return to Index
         </Link>
@@ -73,9 +81,11 @@ export default function PostDetailPage() {
               ← Back
             </button>
 
-            <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
-              [Edit / 수정]
-            </Link>
+            {import.meta.env.DEV && (
+              <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
+                [Edit / 수정]
+              </Link>
+            )}
           </div>
 
           {/* Article Header */}

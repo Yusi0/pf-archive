@@ -1,5 +1,4 @@
 import { parseFrontmatter } from './frontmatter';
-import { POSTS as FALLBACK_POSTS } from '../data/posts';
 
 /**
  * Fetch all posts from content/ via Vite Dev Server API
@@ -9,46 +8,31 @@ export async function fetchContentPosts() {
     ? import.meta.env.BASE_URL.replace(/\/$/, '')
     : '';
 
-  try {
-    let res = await fetch(`${base}/api/posts`);
-    if (!res.ok) {
-      res = await fetch(`${base}/api/posts.json`);
-    }
-    if (!res.ok) throw new Error('API server unavailable');
-    
-    const files = await res.json();
-    const posts = files.map(item => {
-      const { data, content } = parseFrontmatter(item.rawText);
-      return {
-        id: item.filename,
-        slug: item.filename.replace(/\.md$/, ''),
-        filename: item.filename,
-        title: data.title || item.filename.replace(/\.md$/, ''),
-        date: data.date || (item.lastModified ? new Date(item.lastModified).toISOString().split('T')[0] : '2026-10-03'),
-        summary: data.summary || '',
-        category: data.category || 'PF Revamp',
-        content,
-        rawText: item.rawText
-      };
-    });
-
-    // Sort descending by date
-    posts.sort((a, b) => new Date(b.date) - new Date(a.date));
-    return posts;
-  } catch (err) {
-    console.warn('Dev server API not active or error, falling back to static samples:', err.message);
-    return FALLBACK_POSTS.map(p => ({
-      id: `${p.slug}.md`,
-      slug: p.slug,
-      filename: `${p.slug}.md`,
-      title: p.title,
-      date: p.date,
-      summary: p.summary,
-      category: 'PF Revamp',
-      content: p.content,
-      rawText: `---\ntitle: "${p.title}"\ndate: "${p.date}"\nsummary: "${p.summary}"\n---\n\n${p.content}`
-    }));
+  let res = await fetch(`${base}/api/posts`);
+  if (!res.ok) {
+    res = await fetch(`${base}/api/posts.json`);
   }
+  if (!res.ok) throw new Error('글 목록을 불러오지 못했습니다.');
+
+  const files = await res.json();
+  const posts = files.map(item => {
+    const { data, content } = parseFrontmatter(item.rawText);
+    return {
+      id: item.filename,
+      slug: item.filename.replace(/\.md$/, ''),
+      filename: item.filename,
+      title: data.title || item.filename.replace(/\.md$/, ''),
+      date: data.date || (item.lastModified ? new Date(item.lastModified).toISOString().split('T')[0] : '2026-10-03'),
+      summary: data.summary || '',
+      category: data.category || 'PF Revamp',
+      content,
+      rawText: item.rawText
+    };
+  });
+
+  // Sort descending by date
+  posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return posts;
 }
 
 /**
