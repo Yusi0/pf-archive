@@ -46,6 +46,13 @@ export const HelpIcon = (p) => (
   </Icon>
 );
 
+export const CalendarIcon = (p) => (
+  <Icon {...p}>
+    <rect x="2.25" y="3.5" width="11.5" height="10" rx="1.75" />
+    <path d="M2.25 6.75h11.5M5.5 2v3M10.5 2v3" />
+  </Icon>
+);
+
 export const SyncIcon = (p) => (
   <Icon {...p}>
     <path d="M6.5 9.5l3-3M7 4.5l.8-.8a2.4 2.4 0 0 1 3.4 3.4l-.8.8M9 11.5l-.8.8a2.4 2.4 0 0 1-3.4-3.4l.8-.8" />

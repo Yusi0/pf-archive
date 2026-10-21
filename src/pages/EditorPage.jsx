@@ -6,7 +6,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import FontSizeControl from '../components/FontSizeControl';
 import CodeEditor from '../editor/CodeEditor';
 import { extractHeadings } from '../components/TableOfContents';
-import { ArrowLeftIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
+import { ArrowLeftIcon, CalendarIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
 import '../styles/editor.css';
 
 const MODES = [
@@ -79,6 +79,17 @@ New procedural recoil and movement inertia system is currently under testing.
 
     loadPost();
   }, [editId]);
+
+  const dateInputRef = useRef(null);
+  const openDatePicker = () => {
+    const input = dateInputRef.current;
+    if (!input) return;
+    try {
+      input.showPicker();
+    } catch {
+      input.focus(); // showPicker unsupported or blocked
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -311,13 +322,25 @@ New procedural recoil and movement inertia system is currently under testing.
           onChange={(e) => { setTitle(e.target.value); setIsSaved(false); }}
           aria-label="제목"
         />
-        <input
-          type="date"
-          className="meta-date"
-          value={date}
-          onChange={(e) => { setDate(e.target.value); setIsSaved(false); }}
-          aria-label="날짜"
-        />
+        {/* The native date input stays (value handling, accessibility, keyboard); the pill is only its look. */}
+        <div className="meta-date" onClick={openDatePicker}>
+          <CalendarIcon />
+          <span className="meta-date-text">{date || '날짜 선택'}</span>
+          <input
+            ref={dateInputRef}
+            type="date"
+            className="meta-date-input"
+            value={date}
+            onChange={(e) => { setDate(e.target.value); setIsSaved(false); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openDatePicker();
+              }
+            }}
+            aria-label="날짜"
+          />
+        </div>
         <input
           type="text"
           className="meta-summary"
