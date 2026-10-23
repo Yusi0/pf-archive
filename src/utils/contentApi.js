@@ -53,18 +53,48 @@ function toPost(item) {
   };
 }
 
+// The owner's view of GitHub, kept briefly so Home -> Post does not re-read every file each time.
+const FRESH_TTL_MS = 15000;
+let freshCache = null; // { at, promise }
+
+async function fetchFreshPosts() {
+  const posts = (await callRemote('list')).files.map(toPost);
+  posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return posts;
+}
+
+/** The owner's GitHub view, read through the edge function (cached briefly). */
+function readFreshPosts() {
+  if (!freshCache || Date.now() - freshCache.at > FRESH_TTL_MS) {
+    const promise = fetchFreshPosts();
+    freshCache = { at: Date.now(), promise };
+    promise.catch(() => {
+      if (freshCache?.promise === promise) freshCache = null;
+    });
+  }
+  return freshCache.promise;
+}
+
 /**
  * Fetch all posts from content/ via Vite Dev Server API.
- * `fresh` (editor only): on the deployed site read straight from GitHub through the edge
- * function, because the static posts.json lags a deploy behind the last save.
+ *
+ * On the deployed site the static posts.json lags a deploy (1-2 min) behind a save. The
+ * editor (`fresh`) therefore reads straight from GitHub through the edge function and
+ * surfaces errors. For ordinary pages the signed-in owner gets the static list right away and,
+ * if `onFresh` is given, it is called again with GitHub's current posts once they arrive
+ * (a failed read, e.g. an expired session, just keeps what is on screen).
  */
-export async function fetchContentPosts({ fresh = false } = {}) {
-  if (fresh && isRemoteBackend) {
-    const posts = (await callRemote('list')).files.map(toPost);
-    posts.sort((a, b) => new Date(b.date) - new Date(a.date));
-    return posts;
-  }
+export async function fetchContentPosts({ fresh = false, onFresh } = {}) {
+  if (isRemoteBackend && fresh) return readFreshPosts();
 
+  const posts = await readStaticPosts();
+  if (isRemoteBackend && onFresh && canShowEditLink()) {
+    readFreshPosts().then(onFresh).catch(() => {});
+  }
+  return posts;
+}
+
+async function readStaticPosts() {
   const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL)
     ? import.meta.env.BASE_URL.replace(/\/$/, '')
     : '';
@@ -91,7 +121,11 @@ export async function fetchContentPosts({ fresh = false } = {}) {
 export async function saveContentPost(filename, rawText) {
   const safeFilename = filename.endsWith('.md') ? filename : `${filename}.md`;
 
-  if (isRemoteBackend) return callRemote('save', { filename: safeFilename, rawText });
+  if (isRemoteBackend) {
+    const result = await callRemote('save', { filename: safeFilename, rawText });
+    freshCache = null; // the next read must see this save
+    return result;
+  }
 
   const res = await fetch('/api/save-post', {
     method: 'POST',
@@ -113,6 +147,7 @@ export async function saveContentPost(filename, rawText) {
 export async function deleteContentPost(filename) {
   if (isRemoteBackend) {
     await callRemote('delete', { filename });
+    freshCache = null;
     return;
   }
 

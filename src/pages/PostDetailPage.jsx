@@ -28,14 +28,11 @@ export default function PostDetailPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    async function load() {
-      let loaded;
-      try {
-        loaded = await fetchContentPosts();
-      } catch (err) {
-        setError(err.message);
-        return;
-      }
+    let cancelled = false;
+
+    // Shows the post from a list of posts; runs again when the owner's fresher list arrives.
+    function apply(loaded) {
+      if (cancelled) return;
       let postIndex = loaded.findIndex(p => p.slug === slug || p.id === slug || p.filename === slug);
 
       // Backwards-compatibility fallback for older URL slugs
@@ -61,7 +58,15 @@ export default function PostDetailPage() {
       }
     }
 
-    load();
+    fetchContentPosts({ onFresh: apply })
+      .then(apply)
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug]);
 
   if (!post) {

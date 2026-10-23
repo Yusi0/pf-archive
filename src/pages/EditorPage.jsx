@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { fetchContentPosts, saveContentPost, deleteContentPost, uploadImage, uploadVideo } from '../utils/contentApi';
+import { fetchContentPosts, saveContentPost, deleteContentPost, uploadImage, uploadVideo, isRemoteBackend } from '../utils/contentApi';
+import { showToast } from '../lib/authEvents';
 import { stringifyFrontmatter } from '../utils/frontmatter';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import FontSizeControl from '../components/FontSizeControl';
@@ -122,9 +123,12 @@ New procedural recoil and movement inertia system is currently under testing.
     }
 
     try {
+      if (isRemoteBackend) showToast('저장 중…');
       await saveContentPost(targetFilename, rawMarkdownText);
       setFilename(targetFilename);
       setIsSaved(true);
+      // On the deployed site the save is a GitHub commit; the live pages update after the redeploy.
+      showToast(isRemoteBackend ? '저장 완료 · 사이트 반영까지 1~2분' : '저장 완료');
     } catch (err) {
       alert(`저장 오류: ${err.message}`);
     }

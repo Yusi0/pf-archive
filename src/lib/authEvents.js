@@ -6,3 +6,6 @@ export const AUTH_EVENT = 'pf-auth';
 export function notifyAuth(message) {
   window.dispatchEvent(new CustomEvent(AUTH_EVENT, { detail: { message } }));
 }
+
+/** Show a message in the same top toast (e.g. "saved"); the header just re-reads its hint. */
+export const showToast = notifyAuth;

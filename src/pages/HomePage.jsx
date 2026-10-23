@@ -10,7 +10,8 @@ export default function HomePage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchContentPosts().then(setPosts).catch(err => setError(err.message));
+    // onFresh: for the signed-in owner, GitHub's current list replaces the (older) static one
+    fetchContentPosts({ onFresh: setPosts }).then(setPosts).catch(err => setError(err.message));
   }, []);
 
   const term = searchTerm.trim().toLowerCase();
