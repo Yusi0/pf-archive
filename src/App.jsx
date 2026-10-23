@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import PostDetailPage from './pages/PostDetailPage';
+import AuthStatus from './components/AuthStatus';
 
 // Lazy so the editor (and its stylesheet) is only downloaded on /editor. On the deployed site
 // it sits behind AuthGate (Discord sign-in) and saves through the pf-content edge function.
@@ -21,6 +22,7 @@ function Shell({ theme, toggleTheme }) {
 
   return (
     <div className="app-shell" data-layout={layout}>
+      <AuthStatus />
       {!isEditor && <Header theme={theme} toggleTheme={toggleTheme} />}
       <main className="app-main">
         <Routes>

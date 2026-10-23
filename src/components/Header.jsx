@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { isRemoteBackend, canShowEditLink } from '../utils/contentApi';
+import { AUTH_EVENT, notifyAuth } from '../lib/authEvents';
 
 export default function Header({ theme, toggleTheme }) {
   const { pathname, search } = useLocation();
   // Whether this browser has signed in before (a UI hint; the edge function enforces who may write).
   const [signedIn, setSignedIn] = useState(() => isRemoteBackend && canShowEditLink());
 
-  // Coming back from Discord, the tokens sit in the URL until the Supabase client reads them
-  // (which also stores the session), so load it for that one visit.
+  // Re-read the hint whenever a sign-in or sign-out finishes (AuthStatus / logout announce it).
   useEffect(() => {
-    if (!isRemoteBackend) return;
-    if (!/[#?&](access_token|code|error_description)=/.test(window.location.hash + window.location.search)) return;
-    import('../lib/supabase')
-      .then(({ supabase }) => supabase.auth.getSession())
-      .then(({ data }) => setSignedIn(Boolean(data.session)));
+    const refresh = () => setSignedIn(isRemoteBackend && canShowEditLink());
+    window.addEventListener(AUTH_EVENT, refresh);
+    return () => window.removeEventListener(AUTH_EVENT, refresh);
   }, []);
 
   // Supabase is only downloaded when someone actually signs in or out.
@@ -26,7 +24,7 @@ export default function Header({ theme, toggleTheme }) {
   const logout = async () => {
     const { signOut } = await import('../lib/supabase');
     await signOut();
-    setSignedIn(false);
+    notifyAuth('로그아웃 완료');
   };
 
   return (

@@ -145,14 +145,16 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* Page Width */
 .container {
   width: 100%;
-  max-width: var(--max-width);
+  /* + the side padding below, so the content box is exactly the reading column (--max-width) */
+  max-width: calc(var(--max-width) + 3rem);
   margin: 0 auto;
   padding: 0 1.5rem;
 }
 
 /* App frame: header/footer follow --shell-width so the logo lines up with the page's content column */
 .app-shell {
-  --shell-width: var(--max-width);
+  /* + the 1.5rem side padding of .shell-inner, so the home list is as wide as a post's reading column */
+  --shell-width: calc(var(--max-width) + 3rem);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -1486,4 +1488,75 @@ code,
 .auth-gate-back {
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+/* Sign-in / sign-out status toast: slides down from the top edge. The safe-area inset keeps it
+   clear of a notch / Dynamic Island when the page is shown edge to edge (it is 0 in a normal
+   browser tab, where the browser UI already sits above the page). */
+.auth-toast {
+  position: fixed;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  left: 50%;
+  z-index: 100;
+  max-width: calc(100vw - 2rem);
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, calc(-100% - 1.5rem));
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+}
+
+.auth-toast.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, visibility 0s;
+}
+
+/* Reduced motion: no movement, just a quick fade */
+@media (prefers-reduced-motion: reduce) {
+  .auth-toast,
+  .auth-toast.is-visible {
+    transform: translate(-50%, 0);
+    transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+  }
+
+  .auth-toast.is-visible {
+    transition: opacity 0.2s ease, visibility 0s;
+  }
+}
+
+/* Post pages, side columns visible (>= 1170px): the header's middle is empty (logo left, actions
+   right, both over the side columns), so the reading column starts up in that row instead of
+   below it. The header leaves the flow; the side columns keep their old starting height. */
+@media (min-width: 1170px) {
+  .app-shell[data-layout='wide'] {
+    --header-h: 4.4rem;
+    position: relative;
+  }
+
+  .app-shell[data-layout='wide'] .site-header {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: var(--header-h);
+    z-index: 5;
+    background-color: transparent;
+  }
+
+  .app-shell[data-layout='wide'] .app-main {
+    padding-top: var(--header-h);
+  }
+
+  /* Lands level with the logo: 1.8rem from the top (the header's top padding) */
+  .app-shell[data-layout='wide'] .post-main-article {
+    margin-top: calc(-1 * (var(--header-h) + 2.2rem - 1.8rem));
+  }
 }
