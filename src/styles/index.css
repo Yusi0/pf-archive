@@ -1549,6 +1549,14 @@ code,
     height: var(--header-h);
     z-index: 5;
     background-color: transparent;
+    /* Spans the whole row, including the reading column's top bar underneath: let clicks fall
+       through and re-enable them only on what the header actually shows. */
+    pointer-events: none;
+  }
+
+  .app-shell[data-layout='wide'] .site-header .brand-logo,
+  .app-shell[data-layout='wide'] .site-header .header-actions {
+    pointer-events: auto;
   }
 
   .app-shell[data-layout='wide'] .app-main {
