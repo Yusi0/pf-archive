@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { fetchContentPosts, canShowEditLink } from '../utils/contentApi';
+import { AUTH_EVENT } from '../lib/authEvents';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
 import FontSizeControl from '../components/FontSizeControl';
@@ -18,6 +19,13 @@ export default function PostDetailPage() {
   const [olderPost, setOlderPost] = useState(null);
   const [newerPost, setNewerPost] = useState(null);
   const [error, setError] = useState(null);
+  // Re-check when a sign-in / sign-out finishes, so the Edit link appears without a reload.
+  const [editable, setEditable] = useState(canShowEditLink);
+  useEffect(() => {
+    const refresh = () => setEditable(canShowEditLink());
+    window.addEventListener(AUTH_EVENT, refresh);
+    return () => window.removeEventListener(AUTH_EVENT, refresh);
+  }, []);
 
   // A direct visit (e.g. from a Discord embed) has no in-app history: go to the list instead of leaving the site.
   const goBack = () => {
@@ -111,11 +119,6 @@ export default function PostDetailPage() {
                   <span className="icon-btn is-disabled" aria-label="다음 글 없음" role="img"><ChevronRightIcon /></span>
                 )}
               </div>
-              {canShowEditLink() && (
-                <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} className="post-edit-link">
-                  [Edit / 수정]
-                </Link>
-              )}
               <FontSizeControl
                 storageKey="pf_reading_scale"
                 cssVar="--reading-scale"
@@ -129,6 +132,11 @@ export default function PostDetailPage() {
             <h1 className="article-title">{post.title}</h1>
             <div className="article-meta-bar">
               <span>{post.date}</span>
+              {editable && (
+                <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} className="post-edit-link">
+                  [Edit / 수정]
+                </Link>
+              )}
             </div>
           </header>
 

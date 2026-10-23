@@ -7,8 +7,9 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import FontSizeControl from '../components/FontSizeControl';
 import CodeEditor from '../editor/CodeEditor';
 import { toWebp } from '../editor/imageConvert';
+import DatePicker, { todayLocal } from '../components/DatePicker';
 import { extractHeadings } from '../components/TableOfContents';
-import { ArrowLeftIcon, CalendarIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
+import { ArrowLeftIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
 import '../styles/editor.css';
 
 const MODES = [
@@ -24,7 +25,7 @@ export default function EditorPage() {
 
   const [filename, setFilename] = useState('');
   const [title, setTitle] = useState('');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal);
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [isSaved, setIsSaved] = useState(true);
@@ -42,7 +43,7 @@ export default function EditorPage() {
         if (target) {
           setFilename(target.filename || `${target.slug}.md`);
           setTitle(target.title || '');
-          setDate(target.date || new Date().toISOString().split('T')[0]);
+          setDate(target.date || todayLocal());
           setSummary(target.summary || '');
           setContent(target.content || '');
           setExternalDoc({ text: target.content || '' });
@@ -52,7 +53,7 @@ export default function EditorPage() {
       }
 
       // Default sample with clean date + sequence filename
-      const defaultDate = new Date().toISOString().split('T')[0];
+      const defaultDate = todayLocal();
       setFilename(`${defaultDate}-01.md`);
       setTitle('[PF Revamp] 테스트 서버 업데이트 기록');
       setDate(defaultDate);
@@ -81,17 +82,6 @@ New procedural recoil and movement inertia system is currently under testing.
 
     loadPost();
   }, [editId]);
-
-  const dateInputRef = useRef(null);
-  const openDatePicker = () => {
-    const input = dateInputRef.current;
-    if (!input) return;
-    try {
-      input.showPicker();
-    } catch {
-      input.focus(); // showPicker unsupported or blocked
-    }
-  };
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -348,25 +338,7 @@ New procedural recoil and movement inertia system is currently under testing.
           onChange={(e) => { setTitle(e.target.value); setIsSaved(false); }}
           aria-label="제목"
         />
-        {/* The native date input stays (value handling, accessibility, keyboard); the pill is only its look. */}
-        <div className="meta-date" onClick={openDatePicker}>
-          <CalendarIcon />
-          <span className="meta-date-text">{date || '날짜 선택'}</span>
-          <input
-            ref={dateInputRef}
-            type="date"
-            className="meta-date-input"
-            value={date}
-            onChange={(e) => { setDate(e.target.value); setIsSaved(false); }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                openDatePicker();
-              }
-            }}
-            aria-label="날짜"
-          />
-        </div>
+        <DatePicker value={date} onChange={(next) => { setDate(next); setIsSaved(false); }} />
         <input
           type="text"
           className="meta-summary"

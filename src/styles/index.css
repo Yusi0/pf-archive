@@ -393,6 +393,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .article-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   font-size: 0.82rem;
   color: var(--text-muted);
 }

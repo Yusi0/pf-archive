@@ -101,10 +101,13 @@
 
 .meta-date {
   position: relative;
+  justify-self: end;
+}
+
+.meta-date-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  justify-self: end;
   padding: 0.28rem 0.7rem;
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
@@ -114,13 +117,13 @@
   transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.meta-date:hover,
-.meta-date:focus-within {
+.meta-date-btn:hover,
+.meta-date-btn[aria-expanded='true'] {
   color: var(--text-strong);
   border-color: var(--border-strong);
 }
 
-.meta-date:focus-within {
+.meta-date-btn:focus-visible {
   outline: 2px solid var(--border-strong);
   outline-offset: 2px;
 }
@@ -129,17 +132,109 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The real input sits invisibly over the pill: still focusable and keyboard-editable */
-.meta-date-input {
+/* Calendar popover (components/DatePicker.jsx) */
+.datepicker {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  pointer-events: none;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  width: 17.5rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background-color: var(--bg-primary);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
 }
 
-.meta-date-input::-webkit-calendar-picker-indicator {
-  display: none;
+.datepicker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.datepicker-title {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-strong);
+}
+
+.datepicker-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.datepicker-nav:hover {
+  color: var(--text-strong);
+  background-color: var(--hover-tint);
+}
+
+.datepicker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.datepicker-weekdays {
+  margin-bottom: 2px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.datepicker-day {
+  height: 2.25rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.datepicker-day:hover {
+  background-color: var(--hover-tint);
+}
+
+.datepicker-day.is-outside {
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
+.datepicker-day.is-today {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.datepicker-day.is-selected {
+  background-color: var(--text-strong);
+  color: var(--bg-primary);
+  font-weight: 700;
+  opacity: 1;
+}
+
+.datepicker-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.datepicker-today {
+  padding: 0.35rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.datepicker-today:hover {
+  color: var(--text-strong);
+  background-color: var(--hover-tint);
 }
 
 .meta-title {
@@ -429,6 +524,11 @@
 
   .meta-date {
     justify-self: start;
+  }
+
+  .datepicker {
+    right: auto;
+    left: 0;
   }
 
   .editor-cm .cm-content {
