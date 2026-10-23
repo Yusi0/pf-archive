@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { generateHeadingSlug } from '../utils/customMarkdownParser';
+import { ChevronDownIcon } from './Icons';
 
 /** Headings (h1-h4) of a markdown source, with the heading id and 0-based source line. */
 export function extractHeadings(content) {
@@ -109,7 +110,7 @@ export default function TableOfContents({ content }) {
       >
         <span className="toc-bar-label">목차</span>
         <span className="toc-bar-current">{current.text}</span>
-        <span className="toc-bar-chevron" aria-hidden="true">▾</span>
+        <span className="toc-bar-chevron" aria-hidden="true"><ChevronDownIcon size={18} /></span>
       </button>
 
       <div id="toc-panel" className="toc-panel">
