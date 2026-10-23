@@ -35,7 +35,7 @@ export default function EditorPage() {
 
   useEffect(() => {
     async function loadPost() {
-      const posts = await fetchContentPosts();
+      const posts = await fetchContentPosts({ fresh: true });
       if (editId) {
         const target = posts.find(p => p.id === editId || p.slug === editId || p.filename === editId);
         if (target) {
@@ -109,7 +109,7 @@ New procedural recoil and movement inertia system is currently under testing.
     let targetFilename = filename;
     if (!targetFilename || targetFilename.startsWith('update-')) {
       try {
-        const existingPosts = await fetchContentPosts();
+        const existingPosts = await fetchContentPosts({ fresh: true });
         const sameDatePosts = existingPosts.filter(p => p.filename && p.filename.startsWith(date));
         let seq = 1;
         while (sameDatePosts.some(p => p.filename === `${date}-${String(seq).padStart(2, '0')}.md`)) {

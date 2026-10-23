@@ -5,9 +5,10 @@ import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import PostDetailPage from './pages/PostDetailPage';
 
-// The editor only exists in dev (it needs the Vite dev-server API). Lazy + DEV-gated so
-// neither the page nor its stylesheet is emitted into the production bundle.
-const EditorPage = import.meta.env.DEV ? React.lazy(() => import('./pages/EditorPage')) : null;
+// Lazy so the editor (and its stylesheet) is only downloaded on /editor. On the deployed site
+// it sits behind AuthGate (Discord sign-in) and saves through the pf-content edge function.
+const EditorPage = React.lazy(() => import('./pages/EditorPage'));
+const AuthGate = React.lazy(() => import('./components/AuthGate'));
 
 /**
  * Shared page frame. `data-layout` sets --shell-width so the header and footer line up
@@ -25,16 +26,16 @@ function Shell({ theme, toggleTheme }) {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/post/:slug" element={<PostDetailPage />} />
-          {EditorPage && (
-            <Route
-              path="/editor"
-              element={
-                <Suspense fallback={null}>
+          <Route
+            path="/editor"
+            element={
+              <Suspense fallback={null}>
+                <AuthGate>
                   <EditorPage />
-                </Suspense>
-              }
-            />
-          )}
+                </AuthGate>
+              </Suspense>
+            }
+          />
         </Routes>
       </main>
       {!isEditor && <Footer />}

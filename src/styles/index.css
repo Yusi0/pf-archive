@@ -229,6 +229,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-muted);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 /* Home Plain Intro */
 .home-intro {
   padding: 1.5rem 0 1rem 0;
@@ -1447,4 +1453,37 @@ code,
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* Editor sign-in gate (deployed site) */
+.auth-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 18vh 1.5rem 4rem;
+  text-align: center;
+}
+
+.auth-gate-title {
+  font-size: 1.4rem;
+}
+
+.auth-gate-text {
+  color: var(--text-secondary);
+}
+
+.auth-gate-btn {
+  min-height: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: 6px;
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-gate-back {
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }

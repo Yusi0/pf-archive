@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { fetchContentPosts } from '../utils/contentApi';
+import { fetchContentPosts, canShowEditLink } from '../utils/contentApi';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
 import FontSizeControl from '../components/FontSizeControl';
@@ -106,7 +106,7 @@ export default function PostDetailPage() {
                   <span className="icon-btn is-disabled" aria-label="다음 글 없음" role="img"><ChevronRightIcon /></span>
                 )}
               </div>
-              {import.meta.env.DEV && (
+              {canShowEditLink() && (
                 <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} className="post-edit-link">
                   [Edit / 수정]
                 </Link>
