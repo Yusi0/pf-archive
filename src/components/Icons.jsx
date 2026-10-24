@@ -32,6 +32,32 @@ export const ChevronLeftIcon = (p) => (
   </Icon>
 );
 
+export const ImageIcon = (p) => (
+  <Icon {...p}>
+    <rect x="2" y="3" width="12" height="10" rx="1.5" />
+    <circle cx="5.5" cy="6.5" r="1" />
+    <path d="M2.5 12l3.5-3.5 2.5 2.5 2-2 3 3" />
+  </Icon>
+);
+
+export const ListIcon = (p) => (
+  <Icon {...p}>
+    <path d="M6 4.5h8M6 8h8M6 11.5h8M2.5 4.5h.01M2.5 8h.01M2.5 11.5h.01" />
+  </Icon>
+);
+
+export const UndoIcon = (p) => (
+  <Icon {...p}>
+    <path d="M5.5 4L2.5 7l3 3M2.5 7h7a3.5 3.5 0 010 7H6" />
+  </Icon>
+);
+
+export const RedoIcon = (p) => (
+  <Icon {...p}>
+    <path d="M10.5 4l3 3-3 3M13.5 7h-7a3.5 3.5 0 000 7H10" />
+  </Icon>
+);
+
 export const ChevronDownIcon = (p) => (
   <Icon {...p}>
     <path d="M3.5 6L8 10.5 12.5 6" />

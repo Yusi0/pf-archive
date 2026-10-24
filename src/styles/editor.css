@@ -496,6 +496,13 @@
 }
 
 @media (max-width: 900px) {
+  /* Fit the visible area (EditorPage sets --vv-h / --vv-shift from visualViewport) so the format
+     bar, the last item in the column, rests on top of the software keyboard */
+  .app-shell[data-layout='editor'] {
+    height: var(--vv-h, 100dvh);
+    transform: var(--vv-shift, none);
+  }
+
   .editor-meta {
     grid-template-columns: minmax(0, 1fr);
     padding: 0.55rem 1rem 0.4rem;
@@ -578,4 +585,112 @@
 .cm-snippetField {
   background-color: var(--border-subtle);
   border-radius: 2px;
+}
+
+/* Unsaved-draft banner */
+.editor-draft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.editor-draft-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-draft-btn {
+  flex-shrink: 0;
+  min-height: 2rem;
+  padding: 0 0.8rem;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.editor-draft-btn:hover {
+  background-color: var(--hover-tint);
+}
+
+.editor-draft-btn.is-primary {
+  background-color: var(--text-strong);
+  color: var(--bg-primary);
+  font-weight: 700;
+}
+
+/* Format bar: phones only (shown in the max-width block above) */
+.editor-format {
+  display: none;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem calc(0.25rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-strong);
+  background-color: var(--bg-primary);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.editor-format::-webkit-scrollbar {
+  display: none;
+}
+
+.editor-format-file {
+  display: none;
+}
+
+.fmt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.fmt-btn:active {
+  background-color: var(--hover-tint);
+  color: var(--text-strong);
+}
+
+.fmt-btn:disabled {
+  opacity: 0.4;
+}
+
+.fmt-bold {
+  font-weight: 800;
+}
+
+.fmt-text {
+  font-weight: 700;
+}
+
+.fmt-divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 1.4rem;
+  margin: 0 0.25rem;
+  background-color: var(--border-subtle);
+}
+
+/* After the base rules above, so these win at equal specificity */
+@media (max-width: 900px) {
+  .editor-format {
+    display: flex;
+  }
+
+  /* Split mode, preview tab: nothing to format */
+  .editor-app[data-mode='split'][data-tab='preview'] .editor-format {
+    display: none;
+  }
 }

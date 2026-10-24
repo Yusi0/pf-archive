@@ -8,6 +8,7 @@ import FontSizeControl from '../components/FontSizeControl';
 import CodeEditor from '../editor/CodeEditor';
 import { toWebp } from '../editor/imageConvert';
 import DatePicker, { todayLocal } from '../components/DatePicker';
+import EditorToolbar from '../components/EditorToolbar';
 import { extractHeadings } from '../components/TableOfContents';
 import { ArrowLeftIcon, SaveIcon, TrashIcon, HelpIcon, SyncIcon } from '../components/Icons';
 import '../styles/editor.css';
@@ -35,6 +36,89 @@ export default function EditorPage() {
   // The document lives in CodeMirror; this pushes a loaded post into it (a new object = replace).
   const [externalDoc, setExternalDoc] = useState(null);
 
+  // Unsaved work is kept in localStorage (one draft per post, one for "new") so a reload, a
+  // discarded mobile tab or a slip of the thumb does not lose it.
+  const draftKey = `pf_draft_v1:${editId || filename || 'new'}`;
+  const [draft, setDraft] = useState(null); // a draft found on load, waiting for restore / discard
+
+  const clearDraft = () => {
+    try { localStorage.removeItem(draftKey); } catch { /* storage unavailable */ }
+  };
+
+  const offerDraft = (loaded) => {
+    try {
+      const found = JSON.parse(localStorage.getItem(draftKey) || 'null');
+      const same = found && ['title', 'date', 'summary', 'content'].every((k) => (found[k] ?? '') === (loaded[k] ?? ''));
+      if (found && !same) setDraft(found);
+      else if (found) clearDraft();
+    } catch { /* unreadable draft: ignore */ }
+  };
+
+  useEffect(() => {
+    if (isSaved || draft) return undefined; // nothing to keep, or still waiting for the restore decision
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(draftKey, JSON.stringify({ title, date, summary, content, at: Date.now() }));
+      } catch { /* storage full or unavailable */ }
+    }, 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSaved, draft, title, date, summary, content]);
+
+  // Closing or reloading the tab with unsaved changes asks first
+  useEffect(() => {
+    if (isSaved) return undefined;
+    const warn = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [isSaved]);
+
+  const leaveEditor = () => {
+    if (!isSaved && !window.confirm('저장하지 않은 변경 사항이 있어요. 나가면 임시 저장본으로만 남습니다. 나갈까요?')) return;
+    navigate('/');
+  };
+
+  const restoreDraft = () => {
+    setTitle(draft.title ?? '');
+    setDate(draft.date || todayLocal());
+    setSummary(draft.summary ?? '');
+    setContent(draft.content ?? '');
+    setExternalDoc({ text: draft.content ?? '' });
+    setIsSaved(false);
+    setDraft(null);
+  };
+
+  const discardDraft = () => {
+    clearDraft();
+    setDraft(null);
+  };
+
+  // On phones the software keyboard covers the bottom of the page without resizing it. Track the
+  // visible area so the editor (and its format bar at the bottom) ends right above the keyboard.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return undefined;
+    const root = document.documentElement;
+    const update = () => {
+      root.style.setProperty('--vv-h', `${vv.height}px`);
+      // iOS pans the page up to reveal the focused field: follow it. `none` (not translateY(0))
+      // so nothing becomes a containing block for fixed tooltips when there is no offset.
+      root.style.setProperty('--vv-shift', vv.offsetTop > 0 ? `translateY(${vv.offsetTop}px)` : 'none');
+    };
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+      root.style.removeProperty('--vv-h');
+      root.style.removeProperty('--vv-shift');
+    };
+  }, []);
+
   useEffect(() => {
     async function loadPost() {
       const posts = await fetchContentPosts({ fresh: true });
@@ -48,36 +132,22 @@ export default function EditorPage() {
           setContent(target.content || '');
           setExternalDoc({ text: target.content || '' });
           setIsSaved(true);
+          offerDraft({ title: target.title, date: target.date, summary: target.summary, content: target.content });
           return;
         }
       }
 
-      // Default sample with clean date + sequence filename
+      // A new post starts empty. The filename is left unset on purpose: handleSave then picks
+      // the next free <date>-NN.md, so it can never overwrite a post that already exists.
       const defaultDate = todayLocal();
-      setFilename(`${defaultDate}-01.md`);
-      setTitle('[PF Revamp] 테스트 서버 업데이트 기록');
+      setFilename('');
+      setTitle('');
       setDate(defaultDate);
       setSummary('');
-      const sample = `
-# [r#PF Revamp] 반동 물리 및 모션 개편
-
-PF Revamp의 새로운 모션 시스템 테스트가 진행되었습니다.{^1: 9월 25일 [r#roadmap] 메시지 기준입니다.}
-
-::: Original Message
-New procedural recoil and movement inertia system is currently under testing.
-:::
-
-## 총기 스탯 비교
-
-| bg:y#Weapon | [r#Damage] |
-|---|---|
-| *M16A3* | ==y#34== |
-
-[[https://www.youtube.com/watch?v=dQw4w9WgXcQ]]
-`.trim();
-      setContent(sample);
-      setExternalDoc({ text: sample });
+      setContent('');
+      setExternalDoc({ text: '' });
       setIsSaved(true);
+      offerDraft({ title: '', date: defaultDate, summary: '', content: '' });
     }
 
     loadPost();
@@ -117,6 +187,7 @@ New procedural recoil and movement inertia system is currently under testing.
       await saveContentPost(targetFilename, rawMarkdownText);
       setFilename(targetFilename);
       setIsSaved(true);
+      clearDraft();
       // On the deployed site the save is a GitHub commit; the live pages update after the redeploy.
       showToast(isRemoteBackend ? '저장 완료 · 사이트 반영까지 1~2분' : '저장 완료');
     } catch (err) {
@@ -129,6 +200,7 @@ New procedural recoil and movement inertia system is currently under testing.
     if (window.confirm(`content/${filename} 파일을 정말로 삭제하시겠습니까?`)) {
       try {
         await deleteContentPost(filename);
+        clearDraft();
         navigate('/');
       } catch (err) {
         alert(`삭제 오류: ${err.message}`);
@@ -264,7 +336,7 @@ New procedural recoil and movement inertia system is currently under testing.
   return (
     <div className="editor-app" data-tab={tab} data-mode={mode}>
       <header className="editor-toolbar">
-        <button type="button" className="icon-btn" onClick={() => navigate('/')} aria-label="홈으로" title="홈으로">
+        <button type="button" className="icon-btn" onClick={leaveEditor} aria-label="홈으로" title="홈으로">
           <ArrowLeftIcon />
         </button>
 
@@ -327,6 +399,16 @@ New procedural recoil and movement inertia system is currently under testing.
           </button>
         </div>
       </header>
+
+      {draft && (
+        <div className="editor-draft" role="status">
+          <span className="editor-draft-text">
+            저장하지 않은 임시 저장본이 있어요 ({new Date(draft.at || Date.now()).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })})
+          </span>
+          <button type="button" className="editor-draft-btn is-primary" onClick={restoreDraft}>복원</button>
+          <button type="button" className="editor-draft-btn" onClick={discardDraft}>버리기</button>
+        </div>
+      )}
 
       {/* Shared meta row: sits above both panes so their bodies start at the same height */}
       <div className="editor-meta">
@@ -392,6 +474,8 @@ New procedural recoil and movement inertia system is currently under testing.
         </section>
         )}
       </div>
+
+      <EditorToolbar editorRef={editorRef} onPickImage={handleImagePaste} disabled={isUploading} />
 
       {/* Markdown Help Modal Popover */}
       {showHelpModal && (
