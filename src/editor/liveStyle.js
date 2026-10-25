@@ -93,7 +93,7 @@ const arrow = Decoration.replace({ widget: new Arrow() });
 const bullet = Decoration.replace({ widget: new BulletDot() });
 const rule = Decoration.replace({ widget: new Rule() });
 
-const FOLD_OPEN = /^(\s*):::\s*(?!graph)(\S.*)$/i;
+const FOLD_OPEN = /^(\s*):::\s*(?!(?:graph|compare)\b)(\S.*)$/i;
 const FOLD_CLOSE = /^\s*:::\s*$/;
 
 const INLINE_CLASS = {

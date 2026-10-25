@@ -1,4 +1,5 @@
 import { COLOR_PALETTE, DEFAULT_HIGHLIGHT_BG } from './customColorPalette.js';
+import { parseCompareBlock } from './compare/parseCompare.js';
 
 export function resolveAssetUrl(url) {
   if (!url) return '';
@@ -397,8 +398,8 @@ function parseFolds(markdownText, parseBlockFn) {
     const line = lines[i];
     const trimLine = line.trim();
 
-    // Match fold block header: ::: Title (excluding :::graph)
-    const foldMatch = trimLine.match(/^:::\s*(?!graph\b)(.+)$/i);
+    // Match fold block header: ::: Title (excluding :::graph and :::compare)
+    const foldMatch = trimLine.match(/^:::\s*(?!(?:graph|compare)\b)(.+)$/i);
 
     if (foldMatch) {
       const title = foldMatch[1].trim();
@@ -410,7 +411,7 @@ function parseFolds(markdownText, parseBlockFn) {
         const curLine = lines[j];
         const curTrim = curLine.trim();
 
-        if (/^:::\s*(?!graph\b)(.+)$/i.test(curTrim) || /^:::\s*graph\b/i.test(curTrim)) {
+        if (/^:::\s*(?!(?:graph|compare)\b)(.+)$/i.test(curTrim) || /^:::\s*(?:graph|compare)\b/i.test(curTrim)) {
           nestingLevel++;
           contentLines.push(curLine);
         } else if (/^:::\s*$/i.test(curTrim)) {
@@ -583,8 +584,8 @@ export function parseBlocks(markdownText) {
       continue;
     }
 
-    // Graph block placeholder
-    if (/^@@GRAPH:\d+@@$/.test(trimmed)) {
+    // Graph / compare block placeholder
+    if (/^@@(?:GRAPH|COMPARE):\d+@@$/.test(trimmed)) {
       flushPara();
       // Remove any redundant blank-line divs pushed immediately before the graph
       while (output.length > 0 && output[output.length - 1].includes('markdown-blank-line')) {
@@ -782,7 +783,7 @@ export function parseBlocks(markdownText) {
  */
 export function parseFullCustomMarkdown(markdownText) {
   if (!markdownText || typeof markdownText !== 'string') {
-    return { fullHtml: '', footnotes: [], graphs: [] };
+    return { fullHtml: '', footnotes: [], graphs: [], compares: [] };
   }
 
   // Normalize Windows CRLF (\r\n) and legacy CR (\r) to standard LF (\n)
@@ -791,9 +792,11 @@ export function parseFullCustomMarkdown(markdownText) {
   const footnotesMap = new Map();
   const footnotesList = [];
   const graphsList = [];
+  const comparesList = [];
   let fnCounter = 1;
   let refCounter = 1;
   let graphCounter = 1;
+  let compareCounter = 1;
 
   // 0. Extract & Replace :::graph Blocks BEFORE any collapsible ::: blocks!
   const graphBlockRegex = /:::\s*graph\s*\n([\s\S]*?)\n:::/gi;
@@ -807,6 +810,13 @@ export function parseFullCustomMarkdown(markdownText) {
     });
 
     return `\n@@GRAPH:${graphId}@@\n`;
+  });
+
+  // 0b. Same for :::compare (gun / ammo comparison tables); the React side draws them
+  processed = processed.replace(/:::\s*compare\s*\n([\s\S]*?)\n:::/gi, (match, compareContent) => {
+    const compareId = compareCounter++;
+    comparesList.push({ id: compareId, ...parseCompareBlock(compareContent) });
+    return `\n@@COMPARE:${compareId}@@\n`;
   });
 
   // 1. Extract Footnotes & Insert Safe Placeholders (@@FNREF:refId:fnId:fnLabel@@)
@@ -849,5 +859,9 @@ export function parseFullCustomMarkdown(markdownText) {
     return `<div class="graph-placeholder" data-graph-id="${graphId}"></div>`;
   });
 
-  return { fullHtml, footnotes: footnotesList, graphs: graphsList };
+  fullHtml = fullHtml.replace(/@@COMPARE:(\d+)@@/g, (match, compareId) => {
+    return `<div class="compare-placeholder" data-compare-id="${compareId}"></div>`;
+  });
+
+  return { fullHtml, footnotes: footnotesList, graphs: graphsList, compares: comparesList };
 }

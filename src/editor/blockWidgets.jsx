@@ -8,7 +8,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 // site's own <MarkdownRenderer> so they look exactly like the published page. A block turns
 // back into source as soon as the selection touches it.
 
-const GRAPH_OPEN = /^:::\s*graph\b/i;
+const WIDGET_OPEN = /^:::\s*(graph|compare)\b/i;
 const CLOSE = /^:::\s*$/;
 const MEDIA_LINE = /^\s*(\[\[.+\]\]|!\[[^\]]*\]\([^)]*\))\s*$/;
 
@@ -34,11 +34,11 @@ export function findBlocks(doc) {
         n = end + 1;
         continue;
       }
-    } else if (GRAPH_OPEN.test(trimmed)) {
+    } else if (WIDGET_OPEN.test(trimmed)) {
       let end = n + 1;
       while (end <= total && !CLOSE.test(doc.line(end).text.trim())) end++;
       if (end <= total) {
-        push('graph', n, end);
+        push(WIDGET_OPEN.exec(trimmed)[1].toLowerCase(), n, end);
         n = end + 1;
         continue;
       }
@@ -74,7 +74,7 @@ export function blocksFor(doc) {
   return blocks;
 }
 
-const ESTIMATE = { callout: 90, table: 34, graph: 330, media: 320, code: 28 };
+const ESTIMATE = { callout: 90, table: 34, graph: 330, compare: 520, media: 320, code: 28 };
 
 class BlockWidget extends WidgetType {
   constructor(block) {

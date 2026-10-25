@@ -11,6 +11,27 @@ const CURVE_PALETTES = [
     base: '#fb923c',  // Coral Orange
     head: '#facc15',  // Gold
     torso: '#cbd5e1'  // Light Slate
+  },
+  // More curves are needed by :::compare (up to 4 guns); each keeps its own base / head / torso trio
+  {
+    base: '#a78bfa',  // Violet
+    head: '#f0abfc',  // Orchid
+    torso: '#c4b5fd'  // Lavender
+  },
+  {
+    base: '#fb7185',  // Rose
+    head: '#fda4af',  // Blush
+    torso: '#fecdd3'  // Pale Rose
+  },
+  {
+    base: '#2dd4bf',  // Teal
+    head: '#5eead4',  // Aqua
+    torso: '#99f6e4'  // Pale Aqua
+  },
+  {
+    base: '#a3e635',  // Lime
+    head: '#d9f99d',  // Pale Lime
+    torso: '#bef264'  // Light Lime
   }
 ];
 

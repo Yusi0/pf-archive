@@ -1,15 +1,19 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useRef, useMemo } from 'react';
 import ReactDOM from 'react-dom';
 import { parseFullCustomMarkdown, toSuperscript } from '../utils/customMarkdownParser';
 import WeaponDamageGraph from './WeaponDamageGraph';
 
+// Only posts with a :::compare block download the table and its data
+const WeaponCompare = lazy(() => import('./WeaponCompare'));
+
 export default function MarkdownRenderer({ content }) {
   const safeContent = content || '';
-  // Memoised: `graphs` is an effect dependency below, so a fresh array every render would loop forever.
-  const { fullHtml = '', footnotes = [], graphs = [] } = useMemo(() => parseFullCustomMarkdown(safeContent), [safeContent]);
+  // Memoised: `graphs` / `compares` are effect dependencies below, so a fresh array every render would loop forever.
+  const { fullHtml = '', footnotes = [], graphs = [], compares = [] } = useMemo(() => parseFullCustomMarkdown(safeContent), [safeContent]);
 
   const [popover, setPopover] = useState(null); // { id, number, content, x, y }
   const [graphPortals, setGraphPortals] = useState([]);
+  const [comparePortals, setComparePortals] = useState([]);
   const containerRef = useRef(null);
   const closeTimerRef = useRef(null);
 
@@ -268,6 +272,22 @@ export default function MarkdownRenderer({ content }) {
     setGraphPortals(portals);
   }, [fullHtml, graphs]);
 
+  // Same for :::compare placeholders
+  useEffect(() => {
+    if (!containerRef.current || !compares || compares.length === 0) {
+      setComparePortals([]);
+      return;
+    }
+
+    const portals = [];
+    containerRef.current.querySelectorAll('.compare-placeholder').forEach((el) => {
+      const id = el.getAttribute('data-compare-id');
+      const config = compares.find((c) => String(c.id) === String(id));
+      if (config) portals.push({ id, el, config });
+    });
+    setComparePortals(portals);
+  }, [fullHtml, compares]);
+
   return (
     <div
       ref={containerRef}
@@ -286,6 +306,17 @@ export default function MarkdownRenderer({ content }) {
           <WeaponDamageGraph graphData={p.graphData} />,
           p.el,
           `portal-graph-${p.id}`
+        )
+      )}
+
+      {/* Portal :::compare tables into their placeholders */}
+      {comparePortals.map(p =>
+        ReactDOM.createPortal(
+          <Suspense fallback={<div className="compare-loading">비교표를 불러오는 중…</div>}>
+            <WeaponCompare config={p.config} />
+          </Suspense>,
+          p.el,
+          `portal-compare-${p.id}`
         )
       )}
 

@@ -621,6 +621,27 @@ export default function EditorPage() {
 
               <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+                  8-2. 총기 비교표 (:::compare)
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', whiteSpace: 'pre-wrap', backgroundColor: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: '3px' }}>
+                  <code>{`:::compare
+SPEAR LT, VZ. 808, AK-12      총기 (쉼표나 줄바꿈으로 구분)
+UAR A3 + 7.62x39mm | 고관통    총기 + 부착물/탄약 하나, | 뒤는 비고
+거리: 50                       TTK 계산 거리 (studs)
+열: 탄속, 관통력, TTK@30        추가 항목 (핵심 항목은 항상 표시)
+배치: 열 | 행 | 자동            총기를 열로 / 행으로 (5개 이상은 행)
+그래프: 끄기 | A, B             피해 곡선 (기본 켜짐, 최대 4개)
+버전: 11.16                    데이터 버전 (기본 11.17)
+변형: 탄약 전체 | 7.62x39mm     한 총의 기본 + 변형들 (총이 하나일 때)
+:::
+같은 총의 변형끼리 비교하면 달라진 칸만 굵게 표시하고,
+차이 없는 항목은 숨깁니다 (연사력·피해·사거리·TTK·탄창은 항상 표시).
+장전 시간은 탄창식 총기만 계산합니다. † = 11.16 기준 값.`}</code>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
                   9. 콜아웃 (Callout)
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
@@ -651,6 +672,7 @@ export default function EditorPage() {
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
                   <code>{`줄 맨 앞에서 / 를 입력하면 템플릿 메뉴가 열립니다.
 /weapon  무기 틀      /graph  그래프 블록
+/compare 총기 비교표   /variants  부착물 비교
 /fold    접기 블록    /callout  안내 상자
 /table   헤더 있는 표
 Enter 로 선택, Tab / Shift+Tab 으로 빈칸 이동`}</code>

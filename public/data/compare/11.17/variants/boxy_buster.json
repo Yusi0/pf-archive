@@ -1,0 +1,1 @@
+{"weaponId":"boxy_buster","variants":[{"id":"elite_darts_ad73c815","name":"Elite Darts","gameName":"Elite Darts","slot":"Ammo","info":"The most dangerous ammunition known to man.","delta":{"damageGraph":[{"distance":0,"damage":30},{"distance":40,"damage":30},{"distance":70,"damage":20}],"multtorso":4,"bulletspeed":250}}]}

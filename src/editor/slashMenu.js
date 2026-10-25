@@ -35,6 +35,16 @@ const ITEMS = [
     template: [':::graph', '@${1:무기명}', '40 @ 50', '34 @ 100', '1.4, 1.1, 1.0', ':::'].join('\n'),
   },
   {
+    label: 'compare',
+    detail: '총기 비교표 (연사력·피해·TTK 등 + 피해 그래프)',
+    template: [':::compare', '${1:SPEAR LT}, ${2:VZ. 808}', '거리: 50', ':::'].join('\n'),
+  },
+  {
+    label: 'variants',
+    detail: '한 총의 부착물·탄약 비교 (기본 + 변형)',
+    template: [':::compare', '${1:UAR A3}', '변형: 탄약 전체', ':::'].join('\n'),
+  },
+  {
     label: 'fold',
     detail: '접기 블록',
     template: ['::: ${1:제목}', '${2}', ':::'].join('\n'),

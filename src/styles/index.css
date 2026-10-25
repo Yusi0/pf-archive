@@ -1572,3 +1572,219 @@ code,
     margin-top: calc(-1 * (var(--header-h) + 2.2rem - 1.8rem));
   }
 }
+
+/* ===== :::compare — gun / ammo comparison table ===== */
+.compare {
+  margin: 1.6rem 0;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.compare-loading,
+.compare-error {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-muted);
+}
+
+.compare-error {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  line-height: 1.6;
+}
+
+.compare-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.2rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.compare-caption {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.compare-slider {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.compare-slider input[type='range'] {
+  width: 7.5rem;
+  accent-color: var(--text-secondary);
+}
+
+.compare-slider output {
+  min-width: 4.5rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.compare-toggle {
+  margin-left: auto;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.compare-toggle:hover {
+  border-color: var(--border-strong);
+  color: var(--text-strong);
+}
+
+.compare-problems {
+  margin: 0 0 0.7rem;
+  padding: 0.6rem 0.9rem;
+  list-style: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.compare-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.compare-table th,
+.compare-table td {
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.4;
+}
+
+.compare-table thead th,
+.compare-table thead td {
+  border-top: 0;
+  background-color: var(--bg-secondary);
+  vertical-align: bottom;
+}
+
+.compare-table tbody th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* The row labels (guns as columns) or the gun names (guns as rows) stay put while scrolling sideways */
+.compare-table.is-columns tbody th,
+.compare-table.is-columns .compare-corner,
+.compare-table.is-rows tbody th,
+.compare-table.is-rows .compare-corner {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: var(--bg-primary);
+}
+
+.compare-table.is-columns .compare-corner,
+.compare-table.is-rows .compare-corner {
+  background-color: var(--bg-secondary);
+}
+
+.compare-table.is-columns td,
+.compare-table.is-columns thead th {
+  min-width: 4.6rem;
+}
+
+.compare-table tr.is-core th,
+.compare-table tr.is-core td {
+  background-color: var(--hover-tint);
+}
+
+.compare-title {
+  display: block;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.compare-sub {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.compare-value {
+  display: block;
+}
+
+.compare-pct {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.compare-table td.is-changed .compare-value {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.compare-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.compare-sort {
+  font: inherit;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.compare-sort:hover {
+  color: var(--text-strong);
+}
+
+.compare-footnotes {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.74rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.compare-graph {
+  margin-top: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .compare {
+    font-size: 0.8rem;
+  }
+
+  .compare-table th,
+  .compare-table td {
+    padding: 0.5rem 0.5rem;
+  }
+
+  .compare-table tbody th {
+    white-space: normal;
+    min-width: 4.8rem;
+  }
+
+  .compare-toggle {
+    margin-left: 0;
+  }
+}
