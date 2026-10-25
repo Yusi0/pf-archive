@@ -159,7 +159,8 @@ export function buildGraphData(items, config) {
     .map((item) => {
       const pellets = item.stats.pellets > 1 ? item.stats.pellets : 1;
       return {
-        name: item.title,
+        // Gun names only; the attachment name is kept just when two entries are the same gun
+        name: chosen.filter((c) => c.weapon.id === item.weapon.id).length > 1 ? item.title : item.weapon.name,
         points: item.stats.damageGraph.map((p) => ({ damage: p.damage * pellets, range: p.distance, pelletDmg: p.damage, pelletCount: pellets })),
         multipliers: { head: item.stats.multhead ?? 1, torso: item.stats.multtorso ?? 1, limb: 1 },
         ...(pellets > 1 ? { isShotgun: true, pelletCount: pellets } : {}),

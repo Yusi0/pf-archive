@@ -42,6 +42,26 @@ const COMPACT_BELOW_PX = 520;
 const niceStep = (max, target, candidates) =>
   candidates.find((s) => max / s <= target) ?? candidates[candidates.length - 1];
 
+// Where the shots-to-kill count rises along a damage curve: [{ range, bullets }] (bullets = the new count)
+function btkSteps(points, mult) {
+  const steps = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const d1 = points[i].damage * mult;
+    const d2 = points[i + 1].damage * mult;
+    if (!(d2 < d1)) continue;
+    for (let n = 1; n <= 100; n++) {
+      const t = 100 / n;
+      if (t >= d1) continue;
+      if (t <= d2) break;
+      const ratio = (d1 - t) / (d1 - d2);
+      steps.push({ range: points[i].range + ratio * (points[i + 1].range - points[i].range), bullets: n + 1 });
+    }
+  }
+  return steps;
+}
+
+const shortName = (name, max) => (name.length > max ? `${name.slice(0, max - 1)}…` : name);
+
 export default function WeaponDamageGraph({ graphData }) {
   const [hoverData, setHoverData] = useState(null); // { range, damages: [{ name, part, dmg, hits, color }] }
   const [width, setWidth] = useState(660);
@@ -114,9 +134,10 @@ export default function WeaponDamageGraph({ graphData }) {
   };
 
   // 3. Build curve paths
-  let minDmg = 0;
+  let minDmg = Infinity;
   let maxDmg = 0;
 
+  const band = series.length > 1;
   const curves = [];
   series.forEach((s, sIdx) => {
     const pal = CURVE_PALETTES[sIdx % CURVE_PALETTES.length];
@@ -125,13 +146,19 @@ export default function WeaponDamageGraph({ graphData }) {
 
     const mults = s.multipliers || { head: 1.0, torso: 1.0, limb: 1.0 };
 
-    const parts = [
-      { key: 'base', name: 'Base', mult: 1.0, color: pal.base, isBase: true },
-      { key: 'head', name: `Head (x${mults.head})`, mult: mults.head, color: pal.head, dash: '4,4' }
-    ];
+    let parts;
+    if (band) {
+      // Several guns: one line per gun at torso damage (what BTK is based on), in the gun's own colour
+      parts = [{ key: 'torso', name: 'Torso', mult: mults.torso || 1.0, color: pal.base, isBase: true }];
+    } else {
+      parts = [
+        { key: 'base', name: 'Base', mult: 1.0, color: pal.base, isBase: true },
+        { key: 'head', name: `Head (x${mults.head})`, mult: mults.head, color: pal.head, dash: '4,4' }
+      ];
 
-    if (mults.torso && mults.torso !== 1.0 && mults.torso !== mults.head) {
-      parts.push({ key: 'torso', name: `Torso (x${mults.torso})`, mult: mults.torso, color: pal.torso, dash: '2,2' });
+      if (mults.torso && mults.torso !== 1.0 && mults.torso !== mults.head) {
+        parts.push({ key: 'torso', name: `Torso (x${mults.torso})`, mult: mults.torso, color: pal.torso, dash: '2,2' });
+      }
     }
 
     parts.forEach(part => {
@@ -143,6 +170,7 @@ export default function WeaponDamageGraph({ graphData }) {
         const d = p.damage * part.mult;
         curvePoints.push({ range: p.range, damage: d, isAnchor: true });
         if (d > maxDmg) maxDmg = d;
+        if (d < minDmg) minDmg = d;
       });
 
       const dLast = points[points.length - 1].damage * part.mult;
@@ -151,6 +179,7 @@ export default function WeaponDamageGraph({ graphData }) {
       }
 
       if (d0 > maxDmg) maxDmg = d0;
+      if (d0 < minDmg) minDmg = d0;
 
       curves.push({
         seriesName: s.name,
@@ -159,13 +188,16 @@ export default function WeaponDamageGraph({ graphData }) {
         color: part.color,
         dash: part.dash,
         isBase: part.isBase,
+        seriesIdx: sIdx,
         points: curvePoints,
-        anchors: curvePoints.filter(p => p.isAnchor)
+        anchors: curvePoints.filter(p => p.isAnchor),
+        steps: band ? btkSteps(points, part.mult) : []
       });
     });
   });
 
-  const minY = 0;
+  // Several guns share one axis that starts 10 below the lowest damage, so the differences are visible
+  const minY = band && Number.isFinite(minDmg) ? Math.max(0, Math.floor((minDmg - 10) / 5) * 5) : 0;
   const maxY = Math.ceil((maxDmg + 10) / 10) * 10;
 
   // Dimensions
@@ -173,8 +205,8 @@ export default function WeaponDamageGraph({ graphData }) {
   const svgWidth = Math.max(260, width);
   const svgHeight = compact ? 200 : 220;
   const margin = compact
-    ? { top: 14, right: 18, bottom: 28, left: 32 }
-    : { top: 15, right: 20, bottom: 30, left: 35 };
+    ? { top: 14, right: band ? 86 : 18, bottom: 28, left: 32 }
+    : { top: 15, right: band ? 128 : 20, bottom: 30, left: 35 };
   const axisFontSize = compact ? 11.5 : 10;
   // On narrow screens the hover readout can wrap to two lines (3+ curves, shotgun "NxM (펠릿)").
   // Reserve that height up front so hovering never makes the graph jump.
@@ -186,6 +218,36 @@ export default function WeaponDamageGraph({ graphData }) {
 
   const xToSvg = (x) => margin.left + (x / maxX) * graphW;
   const yToSvg = (y) => margin.top + (1 - (y - minY) / (maxY - minY)) * graphH;
+  const endLabels = [];
+  if (band) {
+    const minGap = compact ? 13 : 14;
+    const raw = curves.map((c) => {
+      const last = c.points[c.points.length - 1].damage;
+      return { c, y: yToSvg(last) + 4, bullets: Math.ceil(100 / last - 1e-9) };
+    }).sort((a, b) => a.y - b.y);
+    raw.forEach((l, i) => {
+      if (i > 0 && l.y < raw[i - 1].y + minGap) l.y = raw[i - 1].y + minGap;
+      endLabels.push(l);
+    });
+  }
+  // BTK step markers; a label too close to an earlier one goes below its dot instead of above
+  const stepMarkers = [];
+  if (band) {
+    curves.forEach((c) => c.steps.forEach((st) => {
+      stepMarkers.push({
+        x: xToSvg(st.range),
+        y: yToSvg(calcDamageAt(series[c.seriesIdx].points, c.mult, st.range).total),
+        bullets: st.bullets,
+        color: c.color,
+        below: false
+      });
+    }));
+    stepMarkers.sort((a, b) => a.x - b.x);
+    stepMarkers.forEach((m, i) => {
+      const crowded = stepMarkers.slice(0, i).filter((o) => Math.abs(o.x - m.x) < 26 && Math.abs(o.y - m.y) < 22 && !o.below).length;
+      m.below = crowded > 0;
+    });
+  }
   const svgToX = (px) => Math.max(0, Math.min(maxX, ((px - margin.left) / graphW) * maxX));
 
   // Ticks
@@ -193,9 +255,12 @@ export default function WeaponDamageGraph({ graphData }) {
   const xTicks = [];
   for (let x = 0; x <= maxX; x += xStep) xTicks.push(x);
 
-  const yStep = compact ? niceStep(maxY, 4, [10, 20, 25, 50, 100]) : (maxY > 80 ? 25 : 20);
+  const yRange = maxY - minY;
+  const yStep = band
+    ? niceStep(yRange, compact ? 4 : 5, [5, 10, 20, 25, 50, 100])
+    : compact ? niceStep(maxY, 4, [10, 20, 25, 50, 100]) : (maxY > 80 ? 25 : 20);
   const yTicks = [];
-  for (let y = yStep; y <= maxY; y += yStep) yTicks.push(y);
+  for (let y = Math.ceil(Math.max(minY, 1e-9) / yStep) * yStep; y <= maxY; y += yStep) yTicks.push(y);
 
   // Mouse move handler
   const handleMouseMove = (e) => {
@@ -204,7 +269,18 @@ export default function WeaponDamageGraph({ graphData }) {
     const mouseSvgX = ((e.clientX - rect.left) / rect.width) * svgWidth;
     if (mouseSvgX >= margin.left && mouseSvgX <= svgWidth - margin.right) {
       const r = Math.round(svgToX(mouseSvgX));
-      const damages = curves.map(c => {
+      // Several guns: one entry per gun, torso damage and shots to kill
+      const damages = band ? curves.map((c) => {
+        const s = series[c.seriesIdx];
+        const total = calcDamageAt(s.points, c.mult, r).total;
+        return {
+          name: c.seriesName,
+          part: c.seriesName,
+          dmg: Number.isInteger(total) ? total : total.toFixed(1),
+          hitsLabel: `${Math.ceil(100 / total - 1e-9)}방`,
+          color: c.color
+        };
+      }) : curves.map(c => {
         const s = series.find(ser => ser.name === c.seriesName) || series[0];
         const dmgObj = calcDamageAt(s.points, c.mult, r);
 
@@ -277,13 +353,14 @@ export default function WeaponDamageGraph({ graphData }) {
             <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{hoverData.range} studs:</span>
             {hoverData.damages.map((d, i) => (
               <span key={i} style={{ color: d.color, whiteSpace: 'nowrap' }}>
-                {d.part} <strong style={{ color: 'var(--text-primary)' }}>{d.dmg}</strong> ({d.hitsLabel})
+                {d.part} <strong style={{ color: 'var(--text-primary)' }}>{d.dmg}</strong>{d.hitsLabel ? ` (${d.hitsLabel})` : ''}
               </span>
             ))}
           </div>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.1rem 0.85rem', fontSize: '0.72rem', color: 'var(--text-muted)', minHeight: readoutMinHeight }}>
-            {curves.slice(0, 3).map((c, i) => (
+            {band && <span>몸통 기준 · 점은 킬에 필요한 발수가 늘어나는 거리</span>}
+            {!band && curves.slice(0, 3).map((c, i) => (
               <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
                 <span style={{
                   display: 'inline-block',
@@ -426,7 +503,7 @@ export default function WeaponDamageGraph({ graphData }) {
                 />
 
                 {/* Anchor Points */}
-                {curve.anchors.map((ap, pIdx) => (
+                {!band && curve.anchors.map((ap, pIdx) => (
                   <circle
                     key={`pt-${pIdx}`}
                     cx={xToSvg(ap.range)}
@@ -438,6 +515,20 @@ export default function WeaponDamageGraph({ graphData }) {
               </g>
             );
           })}
+
+          {/* Several guns: BTK step markers and end-of-line names */}
+          {band && stepMarkers.map((m, i) => (
+            <g key={`step-${i}`}>
+              <circle cx={m.x} cy={m.y} r={compact ? 4.5 : 4} fill={m.color} stroke="var(--bg-primary)" strokeWidth="1.5" />
+              <text x={m.x} y={m.below ? m.y + axisFontSize + 6 : m.y - 8} fill="var(--text-primary)" fontSize={axisFontSize} textAnchor="middle">{m.bullets}발</text>
+            </g>
+          ))}
+          {endLabels.map((l, i) => (
+            <text key={`end-${i}`} x={svgWidth - margin.right + 8} y={l.y} fontSize={compact ? 11 : 12} fontWeight="500" fill={l.c.color}>
+              {shortName(l.c.seriesName, compact ? 6 : 10)}
+              <tspan fill="var(--text-muted)" fontWeight="400"> {l.bullets}발</tspan>
+            </text>
+          ))}
 
           {/* Vertical Hairline Guide on Hover */}
           {hoverData && (
@@ -453,7 +544,7 @@ export default function WeaponDamageGraph({ graphData }) {
               />
 
               {curves.map((curve, idx) => {
-                const s = series.find(ser => ser.name === curve.seriesName) || series[0];
+                const s = series[curve.seriesIdx] || series[0];
                 const dmgAt = calcDamageAt(s.points, curve.mult, hoverData.range);
                 return (
                   <circle
