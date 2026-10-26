@@ -60,6 +60,18 @@ function btkSteps(points, mult) {
   return steps;
 }
 
+let measureCtx = null;
+// Pixel width of a label, so the space reserved beside the graph fits it instead of a fixed guess
+function textWidth(text, size) {
+  try {
+    measureCtx = measureCtx || document.createElement('canvas').getContext('2d');
+    measureCtx.font = `500 ${size}px ${getComputedStyle(document.body).fontFamily}`;
+    return measureCtx.measureText(text).width;
+  } catch {
+    return text.length * size * 0.65;
+  }
+}
+
 const shortName = (name, max) => (name.length > max ? `${name.slice(0, max - 1)}…` : name);
 
 export default function WeaponDamageGraph({ graphData }) {
@@ -204,9 +216,17 @@ export default function WeaponDamageGraph({ graphData }) {
   const compact = width < COMPACT_BELOW_PX;
   const svgWidth = Math.max(260, width);
   const svgHeight = compact ? 200 : 220;
+  // Several guns: room for the longest "name N발" label at the end of the lines, and no more
+  const endLabelFont = compact ? 11 : 12;
+  const endLabelWidth = band
+    ? Math.ceil(Math.max(...curves.map((c) => {
+        const last = c.points[c.points.length - 1].damage;
+        return textWidth(`${shortName(c.seriesName, compact ? 6 : 10)} ${Math.ceil(100 / last - 1e-9)}발`, endLabelFont);
+      })))
+    : 0;
   const margin = compact
-    ? { top: 14, right: band ? 86 : 18, bottom: 28, left: 32 }
-    : { top: 15, right: band ? 128 : 20, bottom: 30, left: 35 };
+    ? { top: 14, right: band ? endLabelWidth + 14 : 18, bottom: 28, left: 32 }
+    : { top: 15, right: band ? endLabelWidth + 16 : 20, bottom: 30, left: 35 };
   const axisFontSize = compact ? 11.5 : 10;
   // On narrow screens the hover readout can wrap to two lines (3+ curves, shotgun "NxM (펠릿)").
   // Reserve that height up front so hovering never makes the graph jump.
