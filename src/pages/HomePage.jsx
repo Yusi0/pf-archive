@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchContentPosts } from '../utils/contentApi';
 import PostListItem from '../components/PostListItem';
+import { useAllPostViews } from '../lib/views';
 import { SearchIcon } from '../components/Icons';
 
 export default function HomePage() {
   const [posts, setPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState(null);
+  const views = useAllPostViews();
 
   useEffect(() => {
     // onFresh: for the signed-in owner, GitHub's current list replaces the (older) static one
@@ -52,7 +54,7 @@ export default function HomePage() {
       {filteredPosts.length > 0 ? (
         <div className="post-list-vertical">
           {filteredPosts.map((post) => (
-            <PostListItem key={post.id || post.filename} post={post} />
+            <PostListItem key={post.id || post.filename} post={post} views={views[post.slug]} />
           ))}
         </div>
       ) : (

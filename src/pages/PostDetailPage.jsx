@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { fetchContentPosts, canShowEditLink } from '../utils/contentApi';
 import { AUTH_EVENT } from '../lib/authEvents';
+import { usePostViews } from '../lib/views';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import TableOfContents from '../components/TableOfContents';
 import FontSizeControl from '../components/FontSizeControl';
@@ -19,6 +20,7 @@ export default function PostDetailPage() {
   const [olderPost, setOlderPost] = useState(null);
   const [newerPost, setNewerPost] = useState(null);
   const [error, setError] = useState(null);
+  const views = usePostViews(post ? (post.slug || post.filename) : null);
   // Re-check when a sign-in / sign-out finishes, so the Edit link appears without a reload.
   const [editable, setEditable] = useState(canShowEditLink);
   useEffect(() => {
@@ -131,7 +133,10 @@ export default function PostDetailPage() {
           <header className="article-header">
             <h1 className="article-title">{post.title}</h1>
             <div className="article-meta-bar">
-              <span>{post.date}</span>
+              <span>
+                {post.date}
+                {views !== null && ` · 조회 ${views.toLocaleString('en-US')}`}
+              </span>
               {editable && (
                 <Link to={`/editor?id=${encodeURIComponent(post.filename || post.id)}`} className="post-edit-link">
                   [Edit / 수정]
