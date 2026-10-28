@@ -1,9 +1,21 @@
 import { COLOR_PALETTE, DEFAULT_HIGHLIGHT_BG } from './customColorPalette.js';
 import { parseCompareBlock } from './compare/parseCompare.js';
 
+// A freshly pasted image is committed to GitHub and only served once the site has rebuilt (about a minute),
+// so the editor preview shows the local copy until then: stored path -> object URL.
+const localImagePreviews = new Map();
+export function rememberLocalImage(storedUrl, file) {
+  try {
+    localImagePreviews.set(storedUrl, URL.createObjectURL(file));
+  } catch {
+    // no preview copy: the image simply appears once the site has rebuilt
+  }
+}
+
 export function resolveAssetUrl(url) {
   if (!url) return '';
   let clean = url.trim();
+  if (localImagePreviews.has(clean)) return localImagePreviews.get(clean);
   if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('//') || clean.startsWith('data:')) {
     return clean;
   }

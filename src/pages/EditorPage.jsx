@@ -7,6 +7,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import FontSizeControl from '../components/FontSizeControl';
 import CodeEditor from '../editor/CodeEditor';
 import { toWebp } from '../editor/imageConvert';
+import { rememberLocalImage } from '../utils/customMarkdownParser';
 import DatePicker, { todayLocal } from '../components/DatePicker';
 import EditorToolbar from '../components/EditorToolbar';
 import { extractHeadings } from '../components/TableOfContents';
@@ -218,7 +219,9 @@ export default function EditorPage() {
 
     try {
       // Shrunk + converted to WebP in the browser first; alt stays empty (the filename is noise)
-      const { url } = await uploadImage(await toWebp(file));
+      const converted = await toWebp(file);
+      const { url } = await uploadImage(converted);
+      rememberLocalImage(url, converted);
       editor.replaceFirst(placeholder, `![](${url})\n`);
     } catch (err) {
       alert(`이미지 업로드 실패: ${err.message}`);
