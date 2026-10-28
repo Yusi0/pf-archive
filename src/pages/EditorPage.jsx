@@ -645,6 +645,21 @@ UAR A3 + 7.62x39mm | 고관통    총기 + 부착물/탄약 하나, | 뒤는 비
 
               <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+                  8-3. 이미지 가로 나열 (:::gallery)
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', whiteSpace: 'pre-wrap', backgroundColor: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: '3px' }}>
+                  <code>{`:::gallery
+![첫 번째 설명](/uploads/a.webp)
+![두 번째 설명](/uploads/b.webp)
+:::
+이미지를 한 줄로 나열하고, 넘치면 옆으로 스크롤합니다.
+[] 안의 글은 이미지 아래 설명으로 표시됩니다 (비워도 됩니다).
+블록 안에서 이미지를 붙여넣으면 계속 추가됩니다.`}</code>
+                </div>
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.85rem' }}>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
                   9. 콜아웃 (Callout)
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', whiteSpace: 'pre-wrap' }}>
@@ -677,7 +692,7 @@ UAR A3 + 7.62x39mm | 고관통    총기 + 부착물/탄약 하나, | 뒤는 비
 /weapon  무기 틀      /graph  그래프 블록
 /compare 총기 비교표   /variants  부착물 비교
 /fold    접기 블록    /callout  안내 상자
-/table   헤더 있는 표
+/table   헤더 있는 표    /gallery  이미지 가로 나열
 Enter 로 선택, Tab / Shift+Tab 으로 빈칸 이동`}</code>
                 </div>
               </div>

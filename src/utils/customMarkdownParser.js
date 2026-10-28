@@ -597,7 +597,7 @@ export function parseBlocks(markdownText) {
     }
 
     // Graph / compare block placeholder
-    if (/^@@(?:GRAPH|COMPARE):\d+@@$/.test(trimmed)) {
+    if (/^@@(?:GRAPH|COMPARE|GALLERY):\d+@@$/.test(trimmed)) {
       flushPara();
       // Remove any redundant blank-line divs pushed immediately before the graph
       while (output.length > 0 && output[output.length - 1].includes('markdown-blank-line')) {
@@ -790,6 +790,23 @@ export function parseBlocks(markdownText) {
   return output.join('\n');
 }
 
+const escapeAttr = (text) => String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** The body of a :::gallery block: one image per `![caption](url)`; returns the scrolling row as HTML. */
+function renderGallery(content) {
+  const items = [];
+  for (const m of content.matchAll(/!\[([^\]]*)\]\(([^)]*)\)/g)) {
+    const caption = m[1].trim();
+    items.push(
+      `<figure class="markdown-gallery-item"><img src="${escapeAttr(resolveAssetUrl(m[2]))}" alt="${escapeAttr(caption || 'Image')}" decoding="async" />` +
+        (caption ? `<figcaption>${escapeAttr(caption)}</figcaption>` : '') +
+        '</figure>',
+    );
+  }
+  if (!items.length) return '';
+  return `<div class="markdown-gallery" role="group" aria-label="이미지 ${items.length}장, 가로로 스크롤" tabindex="0">${items.join('')}</div>`;
+}
+
 /**
  * 4. Main Document Custom Parser
  */
@@ -809,10 +826,17 @@ export function parseFullCustomMarkdown(markdownText) {
   let refCounter = 1;
   let graphCounter = 1;
   let compareCounter = 1;
+  const galleries = [];
+
+  // 0-. :::gallery (images side by side, scrolling sideways); the HTML is built here and put in at the end
+  let processed = normalized.replace(/:::\s*gallery\s*\n([\s\S]*?)\n:::/gi, (match, galleryContent) => {
+    galleries.push(renderGallery(galleryContent));
+    return `\n@@GALLERY:${galleries.length}@@\n`;
+  });
 
   // 0. Extract & Replace :::graph Blocks BEFORE any collapsible ::: blocks!
   const graphBlockRegex = /:::\s*graph\s*\n([\s\S]*?)\n:::/gi;
-  let processed = normalized.replace(graphBlockRegex, (match, graphContent) => {
+  processed = processed.replace(graphBlockRegex, (match, graphContent) => {
     const graphData = parseGraphBlock(graphContent);
     const graphId = graphCounter++;
 
@@ -870,6 +894,8 @@ export function parseFullCustomMarkdown(markdownText) {
   fullHtml = fullHtml.replace(/@@GRAPH:(\d+)@@/g, (match, graphId) => {
     return `<div class="graph-placeholder" data-graph-id="${graphId}"></div>`;
   });
+
+  fullHtml = fullHtml.replace(/@@GALLERY:(\d+)@@/g, (match, galleryId) => galleries[Number(galleryId) - 1] ?? '');
 
   fullHtml = fullHtml.replace(/@@COMPARE:(\d+)@@/g, (match, compareId) => {
     return `<div class="compare-placeholder" data-compare-id="${compareId}"></div>`;

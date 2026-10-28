@@ -45,6 +45,11 @@ const ITEMS = [
     template: [':::compare', '${1:UAR A3}', '변형: 탄약 전체', ':::'].join('\n'),
   },
   {
+    label: 'gallery',
+    detail: '이미지를 가로로 나열 (옆으로 스크롤)',
+    template: [':::gallery', '![](${1})', '![](${2})', ':::'].join('\n'),
+  },
+  {
     label: 'fold',
     detail: '접기 블록',
     template: ['::: ${1:제목}', '${2}', ':::'].join('\n'),
