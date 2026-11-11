@@ -31,7 +31,8 @@ function multiplierCell(item, multiplier) {
   const near = stats.damageGraph[0].damage * multiplier * (stats.pellets > 1 ? stats.pellets : 1);
   const far = stats.damageGraph[stats.damageGraph.length - 1].damage * multiplier * (stats.pellets > 1 ? stats.pellets : 1);
   const label = `${round(multiplier, 2)}x`;
-  return { text: label, sub: `(${round(near, 1)} → ${round(far, 1)})`, value: multiplier, key: `${label}|${round(near, 1)}|${round(far, 1)}` };
+  // gunKey: between different guns only the multiplier counts (the damage in brackets is the damage row again)
+  return { text: label, sub: `(${round(near, 1)} → ${round(far, 1)})`, value: multiplier, key: `${label}|${round(near, 1)}|${round(far, 1)}`, gunKey: label };
 }
 
 export const COLUMNS = {

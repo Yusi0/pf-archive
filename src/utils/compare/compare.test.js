@@ -234,9 +234,9 @@ describe('handling and reload notes', () => {
 });
 
 describe('graph data', () => {
-  it('builds one series per item, at most four', () => {
-    const g = buildGraphData(build('M4, AK-12, SPEAR LT, VZ. 808, REGULATOR').items, { options: { graph: { mode: 'on', names: null } } });
-    expect(g.series).toHaveLength(4);
+  it('builds one series per item, at most six', () => {
+    const g = buildGraphData(build('M4, AK-12, SPEAR LT, VZ. 808, REGULATOR, AK-15, AK-19').items, { options: { graph: { mode: 'on', names: null } } });
+    expect(g.series).toHaveLength(6);
     expect(g.series[0].points[0]).toMatchObject({ range: 0 });
     expect(g.series[0].multipliers.limb).toBe(1);
   });

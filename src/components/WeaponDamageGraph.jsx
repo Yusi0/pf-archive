@@ -12,7 +12,7 @@ const CURVE_PALETTES = [
     head: '#facc15',  // Gold
     torso: '#cbd5e1'  // Light Slate
   },
-  // More curves are needed by :::compare (up to 4 guns); each keeps its own base / head / torso trio
+  // More curves are needed by :::compare (up to 6 guns); each keeps its own base / head / torso trio
   {
     base: '#a78bfa',  // Violet
     head: '#f0abfc',  // Orchid
@@ -208,14 +208,14 @@ export default function WeaponDamageGraph({ graphData }) {
     });
   });
 
-  // Several guns share one axis that starts 10 below the lowest damage, so the differences are visible
-  const minY = band && Number.isFinite(minDmg) ? Math.max(0, Math.floor((minDmg - 10) / 5) * 5) : 0;
-  const maxY = Math.ceil((maxDmg + 10) / 10) * 10;
+  // Several guns share one axis that starts just below the lowest damage, so the differences are visible
+  const minY = band && Number.isFinite(minDmg) ? Math.max(0, Math.floor((minDmg - 3) / 2) * 2) : 0;
+  const maxY = band ? Math.ceil((maxDmg + 3) / 2) * 2 : Math.ceil((maxDmg + 10) / 10) * 10;
 
   // Dimensions
   const compact = width < COMPACT_BELOW_PX;
   const svgWidth = Math.max(260, width);
-  const svgHeight = compact ? 200 : 220;
+  const svgHeight = band ? (compact ? 260 : 320) : (compact ? 200 : 220);
   // Several guns: room for the longest "name N발" label at the end of the lines, and no more
   const endLabelFont = compact ? 11 : 12;
   const endLabelWidth = band
@@ -277,7 +277,7 @@ export default function WeaponDamageGraph({ graphData }) {
 
   const yRange = maxY - minY;
   const yStep = band
-    ? niceStep(yRange, compact ? 4 : 5, [5, 10, 20, 25, 50, 100])
+    ? niceStep(yRange, compact ? 4 : 6, [2, 5, 10, 20, 25, 50, 100])
     : compact ? niceStep(maxY, 4, [10, 20, 25, 50, 100]) : (maxY > 80 ? 25 : 20);
   const yTicks = [];
   for (let y = Math.ceil(Math.max(minY, 1e-9) / yStep) * yStep; y <= maxY; y += yStep) yTicks.push(y);

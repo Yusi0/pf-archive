@@ -2,7 +2,7 @@ import { COLUMNS, DEFAULT_COLUMNS, columnLabel } from './columns';
 import { findVariant, findWeapon } from './resolve';
 import { mergeStats, foldName, percentChange } from './calc';
 
-const MAX_GRAPH_SERIES = 4;
+const MAX_GRAPH_SERIES = 6;
 const COLUMN_LAYOUT_MAX = 4; // up to this many items: items as columns; more: items as rows (sortable)
 
 /** Weapon ids whose variants file the block needs (so the component can fetch exactly those). */
@@ -121,7 +121,11 @@ export function buildComparison({ index, variantFiles, config, version, distance
     if (cells.some((c) => c.dagger)) footnotes.add('† 11.17에서 바뀐 값이 반영되지 않았을 수 있는 11.16 기준 값입니다.');
     if (cells.some((c) => c.text?.startsWith('≈'))) footnotes.add('≈ 샷건의 TTK는 모든 펠릿이 명중했을 때의 값입니다.');
 
-    const hidden = mode === 'variant' && !explicit && !def.core && cells.every((c) => c.key === cells[0].key);
+    // Rows where every item shows the same value are folded away (a button brings them back). Variant mode keeps
+    // the core rows so the baseline stays readable; guns mode folds them too (all 30+1 / 120 magazines say nothing).
+    const sameKey = (c) => (mode === 'gun' ? c.gunKey ?? c.key : c.key);
+    const same = !explicit && items.length > 1 && cells.every((c) => sameKey(c) === sameKey(cells[0]));
+    const hidden = same && (mode === 'gun' || !def.core);
     if (hidden) hiddenCount++;
 
     rows.push({
@@ -141,7 +145,7 @@ export function buildComparison({ index, variantFiles, config, version, distance
   return { mode, layout, items, rows, errors, footnotes: [...footnotes], hiddenCount };
 }
 
-/** Input for the existing <WeaponDamageGraph>: one series per item (at most 4, or the ones named in `그래프:`). */
+/** Input for the existing <WeaponDamageGraph>: one series per item (at most 6, or the ones named in `그래프:`). */
 export function buildGraphData(items, config) {
   if (config.options.graph.mode === 'off' || !items.length) return null;
 
